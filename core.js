@@ -147,7 +147,7 @@ var defaultQueue = function () {
           workspace = workspace.match(/'([^']+)'/)[1];
 
         }
-        var incID = elements[indexes["Incident ID"]].textContent.trim();
+        var incID = elements[indexes["Incident number"]].textContent.trim();
         var numAlerts = elements[indexes["Alerts"]].textContent.trim();
         var status = elements[indexes["Status"]].textContent.trim();
         var owner = elements[indexes["Owner"]].textContent.trim();
@@ -268,7 +268,7 @@ var selectFunc = function (e) {
     var severity = elements[indexes["Severity"]].textContent.trim();
     var title = elements[indexes["Title"]].textContent.trim();
     var workspace = elements[indexes["Workspace"]].textContent.trim();
-    var incID = elements[indexes["Incident ID"]].textContent.trim();
+    var incID = elements[indexes["Incident number"]].textContent.trim();
     var numAlerts = elements[indexes["Alerts"]].textContent.trim();
     var status = elements[indexes["Status"]].textContent.trim();
     var owner = elements[indexes["Owner"]].textContent.trim();
