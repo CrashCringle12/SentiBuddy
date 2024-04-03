@@ -1,0 +1,45 @@
+{
+    "name": "Sentinel Queue Notifications",
+    "version": "1.0",
+    "description": "Queue changes monitoring",
+    "manifest_version": 3,
+    "permissions": [
+      "activeTab",
+      "notifications",
+      "tabs",
+      "favicon"
+    ],
+    "commands": {
+      "toggle": {
+        "description": "Activate extension",
+        "suggested_key": {
+          "default": "Alt+A",
+          "mac": "Command+A"
+        }
+      }
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://*/*","http://*/*"],
+        "css": ["core.css"],
+        "js": ["core.js"],
+        "run_at": "document_end",
+        "all_frames": true
+      }
+    ],
+    "background": {
+      "service_worker": "service_worker.js"
+    },
+    "web_accessible_resources": [
+        {
+          "resources": ["_favicon/*"],
+          "matches": ["<all_urls>"],
+          "extension_ids": ["*"]
+        }
+      ],
+    "icons": {
+      "16": "icon.png",
+      "38": "icon.png",
+      "48": "icon.png"
+    }
+  }
