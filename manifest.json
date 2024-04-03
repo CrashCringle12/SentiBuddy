@@ -1,7 +1,10 @@
 {
     "name": "Sentinel Queue Notifications",
-    "version": "1.0",
-    "description": "Queue changes monitoring",
+    "version": "1.1",
+    "description": "Browser Extension to enable Desktop Notifications for Sentinel — Toggle with ALT+A while viewing the queue.",
+    "author": {
+        "email": "lamar.russ@sra.io"
+    },
     "manifest_version": 3,
     "permissions": [
       "activeTab",
@@ -14,6 +17,13 @@
         "description": "Activate extension",
         "suggested_key": {
           "default": "Alt+A",
+          "mac": "Command+A"
+        }
+      },
+      "select-toggle": {
+        "description": "Activate extension",
+        "suggested_key": {
+          "default": "Alt+Shift+A",
           "mac": "Command+A"
         }
       }
@@ -32,7 +42,7 @@
     },
     "web_accessible_resources": [
         {
-          "resources": ["_favicon/*"],
+          "resources": ["_favicon/*", "config.json"],
           "matches": ["<all_urls>"],
           "extension_ids": ["*"]
         }

@@ -15,7 +15,7 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
     chrome.notifications.create(notId, {
       type: 'basic',
       //title: 'Change in ' + sender.tab.title,
-      title: request.info.eventType + ' ' + request.info.client + ' ' + 'Incident w/ ' + request.info.numAlerts + ' Alert(s)',
+      title: request.info.eventType + ' ' + request.info.severity + ' ' + request.info.client + ' ' + 'Incident w/ ' + request.info.numAlerts + ' Alert(s)',
       message: 'INC: ' + request.info.incID + ' - ' + request.info.title,
       iconUrl: faviconURL(sender.tab.url),
     });
@@ -24,6 +24,7 @@ chrome.runtime.onMessage.addListener(function(request, sender) {
 
 chrome.commands.onCommand.addListener(function (command) {
   switch (command) {
+    case 'select-toggle':
     case 'toggle':
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
         chrome.tabs.sendMessage(tabs[0].id, { type: 'toggle' });

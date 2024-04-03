@@ -1,0 +1,4 @@
+{
+    "doRemoveFromFilteredFromQueue": "true",
+    "filterRegexPatterns": ["^TESTERONI_REMOVEME.*"]
+}
