@@ -89,6 +89,15 @@ var selectFunc = function (e) {
     targetElem.classList.remove(ELEMENT_CHANGED_CLASSNAME);
   }
 
+  // Get the column headers
+  var headers = document.querySelectorAll('.fxc-gc-columnheader-content.fxc-gc-text');
+  // Determine the index of each column
+  var indexes = {};
+  headers.forEach((header, index) => {
+    var columnName = header.textContent.trim();
+    indexes[columnName] = index;
+  });
+
   targetElem = e.srcElement;
   targetParents = getTargetParents(e.srcElement);
   observer = new MutationObserver(function() {
@@ -96,13 +105,13 @@ var selectFunc = function (e) {
     var elements = document.querySelectorAll('[id^="fxc-gc-cell-content"]');
     console.log(elements.length)
     // Assuming the desired element is the third  one in the collection
-    var severity = elements[1].textContent.trim();
-    var title = elements[2].textContent.trim();
-    var workspace = elements[7].textContent.trim();
-    var incID = elements[8].textContent.trim();
-    var numAlerts = elements[10].textContent.trim();
-    var status = elements[4].textContent.trim();
-    var owner = elements[5].textContent.trim();
+    var severity = elements[indexes["Severity"]].textContent.trim();
+    var title = elements[indexes["Title"]].textContent.trim();
+    var workspace = elements[indexes["Workspace"]].textContent.trim();
+    var incID = elements[indexes["Incident ID"]].textContent.trim();
+    var numAlerts = elements[indexes["Alerts"]].textContent.trim();
+    var status = elements[indexes["Status"]].textContent.trim();
+    var owner = elements[indexes["Owner"]].textContent.trim();
     var eventType = checkAndUpdateIncident(incID, severity, owner, status);
     console.log(incidents)
     // Splitting the string on the hyphen
