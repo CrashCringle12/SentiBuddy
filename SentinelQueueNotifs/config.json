@@ -1,4 +1,6 @@
 {
     "doRemoveFromFilteredFromQueue": "true",
-    "filterRegexPatterns": ["^TESTERONI_REMOVEME.*"]
+    "filterTitleRegexPatterns": ["^TESTERONI TITLE.*"],
+    "filterTagsRegexPatterns": [".*Automated.*"],
+    "onlyAlertOnLatest": "true"
 }
