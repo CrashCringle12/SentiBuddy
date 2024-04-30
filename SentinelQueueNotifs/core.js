@@ -16,15 +16,23 @@ deletedElementsComponent.classList.add('deleted-nav');
 var config = {};
 var doRemoveFromQueue = true;
 function loadConfig() {
-  fetch(chrome.runtime.getURL('config.json'))
-    .then(response => response.json())
-    .then(json => {
-      config = json;  // Store the parsed JSON in the global variable
+  chrome.storage.sync.get({
+    doRemoveFromFilteredFromQueue: true, // Default values if not set
+    filterTitleRegexPatterns: [],
+    filterTagsRegexPatterns: [],
+    onlyAlertOnLatest: true,
+    desktopNotifications: true
+  }, (items) => {
+      config = {
+          doRemoveFromFilteredFromQueue: items.doRemoveFromFilteredFromQueue,
+          filterTitleRegexPatterns: items.filterTitleRegexPatterns,
+          filterTagsRegexPatterns: items.filterTagsRegexPatterns,
+          onlyAlertOnLatest: items.onlyAlertOnLatest,
+          desktopNotifications: items.desktopNotifications
+      };
       doRemoveFromQueue = config.doRemoveFromFilteredFromQueue;
       console.log("Config loaded:", config);
-      // Optionally, call any initialization functions here
-    })
-    .catch(error => console.error("Error loading config:", error));
+    });
 }
 loadConfig();
 
@@ -162,7 +170,7 @@ var defaultQueue = function () {
 
     // Get all rows in the queue
     var rows = document.querySelectorAll(".fxc-gc-row-content.fxc-gc-row-content_0")
-    var sendMessage = false
+    var sendMessage = true
     rows.forEach((row, index) => {
       elements = row.querySelectorAll('[id^="fxc-gc-cell-content"]');
       //console.log(elements.length)
@@ -218,7 +226,10 @@ var defaultQueue = function () {
             }
           };
 
-          if (eventType != "NONE" && !incMatchesRegex) {
+          if (eventType != "NONE" && !incMatchesRegex && config.desktopNotifications && sendMessage) {
+            if (config.onlyAlertOnLatest) {
+              sendMessage = false
+            }
             //console.log("Sending")
             chrome.runtime.sendMessage(message);
           } else {
@@ -284,9 +295,7 @@ var removeListeners = function () {
 // Every time we get a new message toggle the plugin
 chrome.runtime.onMessage.addListener(function (request) {
   selectMode = false;
-  if (request.type == 'select-toggle') {
-    selectMode = true;
-  }
+
   if (request.type == 'toggle') {
     // Remove any previous observers listeners if there are any;
     if (observer) {

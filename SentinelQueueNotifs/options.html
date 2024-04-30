@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Senti Noti Me</title>
+</head>
+
+<body>
+    <h1>Extension Configuration</h1>
+
+    <label>
+        Remove from Filtered Queue:
+        <input type="checkbox" id="removeFromQueue" />
+    </label>
+    <br>
+    <label>Filter Title Regex Patterns:</label>
+    <div id="titlePatterns"></div>
+    <button type="button" id="addTitlePattern">Add Pattern</button>
+    <br>
+    <label>Filter Tags Regex Patterns:</label>
+    <div id="tagPatterns"></div>
+    <button type="button" id="addTagPattern">Add Pattern</button>
+    <br>
+    <label>
+        Enable Desktop Notifications:
+        <input type="checkbox" id="desktopNotifications" />
+    </label>
+    <br>
+    <label>
+        Only Notify On Latest:
+        <input type="checkbox" id="alertOnLatest" />
+    </label>
+    <br>
+    <label>
+        AbuseIPDB API Key:
+        <input type="text" id="abuseipdbAPIkey" />
+    </label>
+    <br>
+    <label>
+        VT API Key (Unused):
+        <input type="text" id="vtkey" />
+    </label>
+    <br>
+    <div id="status"></div>
+    <button id="save">Save</button>
+
+    <script src="options.js"></script>
+</body>
+
+</html>

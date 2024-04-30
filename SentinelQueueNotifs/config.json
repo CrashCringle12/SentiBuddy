@@ -1,6 +1,0 @@
-{
-    "doRemoveFromFilteredFromQueue": "true",
-    "filterTitleRegexPatterns": ["^TESTERONI TITLE.*"],
-    "filterTagsRegexPatterns": [".*Automated.*"],
-    "onlyAlertOnLatest": "true"
-}

@@ -1,36 +1,53 @@
 {
-    "name": "Sentinel Queue Notifications",
-    "version": "1.1",
-    "description": "Browser Extension to enable Desktop Notifications for Sentinel — Toggle with ALT+A while viewing the queue.",
+    "name": "Senti Buddy",
+    "version": "2.1",
+    "description": "Browser Extension to enable Filtering & Desktop Notifications for Sentinel — Toggle with ALT+A . ALT+C to access config.",
     "author": {
-        "email": "lamar.russ@sra.io"
+        "email": "cringlebox@gmail.com"
+    },
+    "options_ui": {
+      "page": "options.html",
+      "open_in_tab": false
     },
     "manifest_version": 3,
     "permissions": [
+      "https://api.abuseipdb.com/",
       "activeTab",
       "notifications",
       "tabs",
+      "clipboardRead",
+      "storage",
       "favicon"
     ],
+    "action": {
+      "default_popup": "popup.html"
+     },
     "commands": {
       "toggle": {
         "description": "Activate extension",
         "suggested_key": {
           "default": "Alt+A",
-          "mac": "Command+A"
+          "mac": "Command+Shift+A"
         }
       },
-      "select-toggle": {
-        "description": "Activate extension",
+      "search-ip": {
+        "description": "Search an IP",
         "suggested_key": {
-          "default": "Alt+Shift+A",
-          "mac": "Command+A"
+          "default": "Alt+P",
+          "mac": "Command+Shift+P"
+        }
+      },
+      "view-config": {
+        "description": "Modify Configurations",
+        "suggested_key": {
+          "default": "Alt+C",
+          "mac": "Command+Shift+C"
         }
       }
     },
     "content_scripts": [
       {
-        "matches": ["https://*/*","http://*/*"],
+        "matches": ["https://portal.azure.com/*", "https://api.abuseipdb.com/*", "https://www.virustotal.com/*"],
         "css": ["core.css"],
         "js": ["core.js"],
         "run_at": "document_end",
@@ -42,8 +59,8 @@
     },
     "web_accessible_resources": [
         {
-          "resources": ["_favicon/*", "config.json"],
-          "matches": ["<all_urls>"],
+          "resources": ["_favicon/*", "options.html", "popup.html"],
+          "matches": ["https://portal.azure.com/*","https://api.abuseipdb.com/*", "https://www.virustotal.com/*"],
           "extension_ids": ["*"]
         }
       ],

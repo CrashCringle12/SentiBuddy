@@ -1,0 +1,99 @@
+body {
+    min-width: 320px; /* Set the width you prefer */
+    min-height: 420px; /* Set the height you prefer */
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    background-color: #f4f4f4;
+}
+h1, h2 {
+    color: #333;
+    margin-bottom: 10px;  
+}
+
+h1 {
+    font-size: 18px;  
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 16px;  
+}
+
+.key {
+    font-weight: bold; /* Makes keys bold */
+    color: #333; /* Adjust the color if needed */
+}
+
+.content {
+    margin-bottom: 10px;
+}
+
+#checkIp {
+    padding: 10px 20px;
+    border: none;
+    background-color: #4CAF50; /* Green background */
+    color: white;
+    border-radius: 20px; /* Rounded corners */
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s; /* Smooth transition for hover effects */
+}
+
+#checkIp:hover {
+    background-color: #45a049; /* Darker green on hover */
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); /* Shadow effect on hover */
+}
+.score-red {
+    color: #ff6347; /* Tomato red for high risk */
+}
+
+.score-orange {
+    color: #ffa500; /* Orange for medium risk */
+}
+
+.score-yellow {
+    color: #ffd700; /* Yellow for low risk */
+}
+
+.score-green {
+    color: #008000; /* Green for no risk */
+}
+
+.progress-container {
+    width: 90%;
+    background-color: #ddd;
+    border-radius: 10px;
+    margin: 10px 0;
+    overflow: hidden;  
+}
+
+.progress-bar {
+    height: 20px;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 20px;
+    color: white;
+    transition: width 0.4s ease;
+}
+
+.progress-bar.score-red {
+    background-color: #ff6347; /* Tomato red for high risk */
+}
+
+.progress-bar.score-orange {
+    background-color: #ffa500; /* Orange for medium risk */
+}
+
+.progress-bar.score-yellow {
+    background-color: #ffd700; /* Yellow for low risk */
+}
+
+.progress-bar.score-green {
+    background-color: #008000; /* Green for no risk */
+}
