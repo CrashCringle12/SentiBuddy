@@ -21,18 +21,25 @@ Presently, the extension will notify of the following:
 9. **Make sure Auto-refresh Incidents** is enabled
 
 ## 🔍Filtering Alerts [out of queue] with RegEx
-This extension also allows you to filter incidents by Title using regular expressions. The config.json file can be found within the extension folder. The format for config.json is the following:
-~~~~
-{
-    "doRemoveFromFilteredFromQueue": "true",
-    "filterRegexPatterns": ["^Dummy-.*", "^TestAlert -.*"]
-}
-~~~~
-**doRemoveFromFilteredFromQueue** - If this is set to true then new incidents with a title that is matched by your provided Regex patterns will be visually removed from the queue. These incidents will still technically be in the queue (untouched), but they will be hidden on your client.
+This extension also allows you to filter incidents by Title or Tags using regular expressions. The config can be accessed at any time by pressing ALT+C. Here is an example configuration:
 
-**filterRegexPatterns** - This is where you can provide a list of regex patterns to check each new title against. If an incident is matched, it will not send a notification. Additionally, if doRemoveFromFilteredFromQueue is true, this incident will be visually removed from queue.
+![image](https://github.com/CrashCringle12/SentiNotiMe/assets/30600688/41880598-405a-41ec-9773-8b608d77e1b4)
 
-In the above example, new incidents that begin with “^Dummy-” or “TestAlert -” will not send notifications and will be hidden in your dedicated queue.
+**doRemoveFilteredFromQueue** - If this is set to true then new incidents with a title that is matched by your provided Regex patterns will be visually removed from the queue. These incidents will still technically be in the queue (untouched), but they will be hidden on your client.
+
+**Filter Title Regex Patterns** - This is where you can provide a list of regex patterns to check each new title against. If an incident is matched, it will not send a notification. Additionally, if doRemoveFilteredFromQueue is true, this incident will be visually removed from queue.
+
+In the above example, new incidents that begin with “Dummy -” or “TestAlert -”, have the tag "Completed", or have a tag beginning with "DoNot" will not send notifications and will be hidden in your dedicated queue.
+
+**Filter Tags Regex Patterns** -  This is where you can provide a list of regex patterns to check each tag against. If an incident is matched, it will not send a notification and if doRemoveFilteredFromQueue is true, this incident will be visually removed from queue.
+
+**Enable Desktop Notifications** - Determines whether Desktop Notifications are enabled or not.
+
+**Only Notify On Latest** - If this is enabled, you will only receive desktop notifications for the latest new entry in the queue. If this is disabled, the extension will process the entire queue and send notifications accordingly (new or modified incidents)
+
+**Abuse IPDB APIKey** - Needed to provide OSINT on the IP in your clipboard quickly from your current page. Make an account on https://www.abuseipdb.com/ to get your API Key.
+
+**VirusTotal APIKey** - Currently unused, but coming in later update.
 
 ### Notes 
 Make sure you set this up before setting up the extension. If you want to make edits after the fact, you can click the Update button in the Extensions page to reload the contents of the extension. Just make sure you restart your browser.
