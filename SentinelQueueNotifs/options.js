@@ -22,8 +22,9 @@ const saveOptions = () => {
     const alertOnLatest = document.getElementById('alertOnLatest').checked;
     const desktopNotifications = document.getElementById('desktopNotifications').checked;
     const abuseipdbAPIkey = document.getElementById('abuseipdbAPIkey').value.trim();
-    console.log(abuseipdbAPIkey)
+    const ipInfoKey = document.getElementById('ipInfoKey').value.trim();
     const vtkey = document.getElementById('vtkey').value.trim();
+    const scamalyticsURL = document.getElementById('scamalyticsURL').value.trim();
     chrome.storage.sync.set({
         doRemoveFromFilteredFromQueue: removeFromQueue,
         filterTitleRegexPatterns: titlePatterns,
@@ -31,7 +32,9 @@ const saveOptions = () => {
         onlyAlertOnLatest: alertOnLatest,
         desktopNotifications: desktopNotifications,
         abuseipdbAPIkey: abuseipdbAPIkey,
-        vtkey: vtkey
+        vtkey: vtkey,
+        ipInfoKey: ipInfoKey,
+        scamalyticsURL: scamalyticsURL
     }, () => {
         const status = document.getElementById('status');
         status.textContent = 'Options saved.';
@@ -49,8 +52,11 @@ function restoreOptions() {
         onlyAlertOnLatest: false,
         desktopNotifications: true,
         abuseipdbAPIkey: '',
-        vtkey: ''
+        vtkey: '',
+        ipInfoKey: '',
+        scamalyticsURL: ''
     }, (items) => {
+        
         document.getElementById('removeFromQueue').checked = items.doRemoveFromFilteredFromQueue;
         document.getElementById('alertOnLatest').checked = items.onlyAlertOnLatest;
         document.getElementById('desktopNotifications').checked = items.desktopNotifications;
@@ -58,6 +64,8 @@ function restoreOptions() {
         items.filterTagsRegexPatterns.forEach(pattern => addPattern('tagPatterns', pattern));
         document.getElementById('abuseipdbAPIkey').value = items.abuseipdbAPIkey;
         document.getElementById('vtkey').value = items.vtkey;
+        document.getElementById('ipInfoKey').value = items.ipInfoKey;
+        document.getElementById('scamalyticsURL').value = items.scamalyticsURL
     });
 }
 

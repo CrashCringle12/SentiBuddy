@@ -5,56 +5,150 @@ const verbose = true;  // This is a flag, typically set to get detailed response
 // Set the API key
 var abuseipdbAPIkey = '';
 var VTkey = '';
-function loadKey() {
+var scamalyticsURL = '';
+var ipInfoKey = '';
+function loadKeys() {
   chrome.storage.sync.get({
     abuseipdbAPIkey: '',
-    vtkey: ''
+    vtkey: '',
+    scamalyticsURL: '',
+    ipInfoKey: ''
   }, (items) => {
-      abuseipdbAPIkey = items.abuseipdbAPIkey;
-      VTkey = items.vtkey;
+    abuseipdbAPIkey = items.abuseipdbAPIkey;
+    VTkey = items.vtkey;
+    scamalyticsURL = items.scamalyticsURL;
+    ipInfoKey = items.ipInfoKey;
+
+  });
+}
+loadKeys();
+
+async function handleAPIRequests(request, sendResponse) {
+  // Load API keys (ensure this function is async or handles promises correctly)
+  await loadKeys();
+
+  const relevantResponse = { abuseIPDB: {}, IPInfo: {}, Scamalytics: {}, ip: true };
+
+  // Prepare promises for both requests
+  const abuseIPDBPromise = abuseipdbAPIkey
+    ? fetchAbuseIPDB(request.ip, abuseipdbAPIkey)
+    : Promise.resolve({ error: "No AbuseIPDB ApiKey provided. Please provide a key in the configuration's menu via ALT+C" });
+
+  const ipInfoPromise = ipInfoKey
+    ? fetchIpInfo(request.ip, ipInfoKey)
+    : Promise.resolve({ error: "No IpInfo APIKey provided. Please provide a key in the configuration's menu via ALT+C" });
+
+  const ScamalyticsPromise = scamalyticsURL
+    ? fetchScamalytics(request.ip, scamalyticsURL)
+    : Promise.resolve({ error: "No Scamalytics URL provided. Please provide a URL in the configuration's menu via ALT+C" });
+
+  // Execute both requests in parallel and wait for both to complete
+  try {
+    const [abuseIPDBData, ipInfoData, scamalyticsData] = await Promise.all([abuseIPDBPromise, ipInfoPromise, ScamalyticsPromise]);
+    relevantResponse.abuseIPDB = abuseIPDBData.data;
+    relevantResponse.IPInfo = ipInfoData;
+    relevantResponse.Scamalytics = scamalyticsData
+
+    sendResponse(relevantResponse);
+  } catch (error) {
+    sendResponse({ error: error.toString() });
+  }
+}
+
+async function handleHashAPIRequests(request, sendResponse) {
+  // Load API keys (ensure this function is async or handles promises correctly)
+  await loadKeys();
+
+  const relevantResponse = { VT: {}, ip: false };
+
+  // Prepare promises for VT request
+  const VirusTotalPromise = VTkey
+    ? fetchVirusTotalHash(request.hash, VTkey)
+    : Promise.resolve({ error: "No VirusTotal API Key provided. Please provide a URL in the configuration's menu via ALT+C" });
+
+  // Execute both requests in parallel and wait for both to complete
+  try {
+    const [virusTotalData] = await Promise.all([VirusTotalPromise]);
+    relevantResponse.VT = virusTotalData
+
+    sendResponse(relevantResponse);
+  } catch (error) {
+    sendResponse({ error: error.toString() });
+  }
+}
+function fetchAbuseIPDB(ip, apiKey) {
+  const headers = new Headers({
+    'Key': apiKey,
+    'Accept': 'application/json'
+  });
+  const queryParams = new URLSearchParams({ ipAddress: ip, maxAgeInDays: maxAgeInDays, verbose: verbose });
+  const url = `https://api.abuseipdb.com/api/v2/check?${queryParams}`;
+  return fetch(url, { headers: headers })
+    .then(response => response.json());
+}
+
+function fetchIpInfo(ip, token) {
+  const url = `https://ipinfo.io/${ip}?token=${token}`;
+  return fetch(url)
+    .then(response => response.json());
+}
+
+function fetchScamalytics(ip, apiURL) {
+  const headers = new Headers({
+    'Accept': 'application/json'
+  });
+  const url = `${apiURL}&ip=${ip}`;
+  return fetch(url, { headers: headers })
+    .then(response => response.json());
+}
+
+function fetchVirusTotalIP(ip, VTkey) {
+  const options = {
+    method: 'GET',
+    headers: {
+      accept: 'application/json',
+      'x-apikey': VTkey
+    }
+  };
+
+  fetch(`https://www.virustotal.com/api/v3/ip_addresses/${ip}`, options)
+    .then(response => response.json())
+    .then(data => {
+      sendResponse({ VT: data });  // Send VT data as additional response
+    })
+    .catch(err => {
+      console.error("VirusTotal API error:", err);
+      sendResponse({ error: err.toString() });
     });
 }
-loadKey();
 
+function fetchVirusTotalHash(hash, VTkey) {
+  const options = {
+    method: 'GET',
+    headers: {
+      accept: 'application/json',
+      'x-apikey': VTkey
+    }
+  };
+  return fetch(`https://www.virustotal.com/api/v3/files/${hash}`, options)
+    .then(response => response.json());
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type == 'search-ip') {
-      loadKey();
-      // Configure the request headers
-      var headers = new Headers({
-        'Key': abuseipdbAPIkey,
-        'Accept': 'application/json'
-      });
-      // Construct the query string
-      var queryParams = new URLSearchParams({
-        ipAddress: request.ip,
-        maxAgeInDays: maxAgeInDays,
-        verbose: verbose  // Include this only if needed for detailed responses
-      });
-
-      // Define the API endpoint with the query string
-      const url = `https://api.abuseipdb.com/api/v2/check?${queryParams}`;
-      //var relevantResponse = {abuseIPDB: {}, VT: {}}
-      fetch(url, { headers: headers })
-      .then(response => response.json())
-      .then(data => {
-          //relevantResponse.abuseIPDB = data
-          sendResponse(data)
-      })
-      .catch(error => {
-          sendResponse({ error: error.toString() });
-      });
-           
-    // const options = {method: 'GET', headers: {accept: 'application/json', 'x-apikey': VTkey}};
-
-    // fetch('https://www.virustotal.com/api/v3/ip_addresses/51.75.142.157', options)
-    //   .then(response => response.json())
-    //   .then(response =>{
-    //     relevantResponse.VT = response
-    //     sendResponse(relevantResponse)
-    //   })
-    //   .catch(err => {sendResponse({error: err.toString()})});
-    return true; // Indicates that the response is asynchronous
+  if (request.type === 'search-ip') {
+    handleAPIRequests(request, sendResponse).then(() => {
+      //fetchVirusTotal(request, sendResponse); // Moved VirusTotal logic into a function
+    }).catch(error => {
+      sendResponse({ error: error.toString() });
+    });
+    return true;  // Must return true when async response is expected
+  } else if (request.type === 'search-hash') {
+    handleHashAPIRequests(request, sendResponse).then(() => {
+      //fetchVirusTotal(request, sendResponse); // Moved VirusTotal logic into a function
+    }).catch(error => {
+      sendResponse({ error: error.toString() });
+    });
+    return true;  // Must return true when async response is expected
   } else {
     console.log(request.type)
   }
@@ -62,13 +156,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 function faviconURL(u) {
-    const url = new URL(chrome.runtime.getURL("/_favicon/"));
-    url.searchParams.set("pageUrl", u);
-    url.searchParams.set("size", "32");
-    return url.toString();
-  }
+  const url = new URL(chrome.runtime.getURL("/_favicon/"));
+  url.searchParams.set("pageUrl", u);
+  url.searchParams.set("size", "32");
+  return url.toString();
+}
 
-chrome.runtime.onMessage.addListener(function(request, sender) {
+chrome.runtime.onMessage.addListener(function (request, sender) {
   console.log(sender)
   if (request.type == 'notification') {
     console.log(request.info)
@@ -93,9 +187,9 @@ chrome.commands.onCommand.addListener(function (command) {
         window.open(chrome.runtime.getURL('options.html'));
       }
     case 'toggle':
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         chrome.tabs.sendMessage(tabs[0].id, { type: 'toggle' });
-        
+
       });
       break;
   }
