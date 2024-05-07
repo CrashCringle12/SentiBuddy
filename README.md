@@ -1,4 +1,4 @@
-# Chrome Browser Extension to enable Sentinel Desktop Notifications 
+# A Companion Chrome Browser Extension for Microsoft Sentinel that enables Desktop Notifications, Queue Filtering, and quick-hand OSINT tools
 
 The extension will give desktop notifications for events in the queue. You will need a new tab dedicated exclusively to the queue (It does not always need to be viewable). The amount of notifications you receive is heavily dependent on your filters particularly whether you display only New or both New & Active incidents. It’s recommended to set your dedicated queue tab’s status filter to New. 
 
