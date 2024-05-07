@@ -230,8 +230,10 @@ var defaultQueue = function () {
             if (config.onlyAlertOnLatest) {
               sendMessage = false
             }
+            if (message) {
+              chrome.runtime.sendMessage(message);
+            }
             //console.log("Sending")
-            chrome.runtime.sendMessage(message);
           } else {
             //console.log("Not sending");
           }

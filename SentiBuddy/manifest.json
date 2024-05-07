@@ -1,6 +1,6 @@
 {
     "name": "Senti Buddy",
-    "version": "2.1.1",
+    "version": "2.3",
     "description": "Browser Extension to enable Filtering & Desktop Notifications for Sentinel — Toggle with ALT+A . ALT+C to access config.",
     "author": {
         "email": "cringlebox@gmail.com"
@@ -36,6 +36,13 @@
           "mac": "Command+Shift+P"
         }
       },
+      "search-hash": {
+        "description": "Search Hash",
+        "suggested_key": {
+          "default": "Alt+H",
+          "mac": "Command+Shift+H"
+        }
+      },
       "view-config": {
         "description": "Modify Configurations",
         "suggested_key": {
@@ -46,7 +53,7 @@
     },
     "content_scripts": [
       {
-        "matches": ["https://portal.azure.com/*", "https://api.abuseipdb.com/*", "https://www.virustotal.com/*"],
+        "matches": ["https://portal.azure.com/*", "https://api.abuseipdb.com/*", "https://www.virustotal.com/*", "https://api11.scamalytics.com/*"],
         "css": ["core.css"],
         "js": ["core.js"],
         "run_at": "document_end",
@@ -59,7 +66,7 @@
     "web_accessible_resources": [
         {
           "resources": ["_favicon/*", "options.html", "popup.html"],
-          "matches": ["https://portal.azure.com/*","https://api.abuseipdb.com/*", "https://www.virustotal.com/*"],
+          "matches": ["https://portal.azure.com/*","https://api.abuseipdb.com/*", "https://www.virustotal.com/*", "https://api11.scamalytics.com/*"],
           "extension_ids": ["*"]
         }
       ],

@@ -1,0 +1,233 @@
+body {
+    max-width: 100%;
+    /* Ensures body doesn't exceed the width of the viewport */
+    min-width: 320px;
+    /* Set the width you prefer */
+    min-height: 420px;
+    /* Set the height you prefer */
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    background-color: #f4f4f4;
+}
+
+h1,
+h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 16px;
+}
+
+.key {
+    font-weight: bold;
+    /* Makes keys bold */
+    color: #333;
+    /* Adjust the color if needed */
+}
+
+.key,
+.hash-value {
+    display: inline-block;
+    vertical-align: top;
+    /* Keeps label and value aligned at the top */
+}
+
+.content {
+    margin-bottom: 10px;
+    word-wrap: break-word;
+    /* Allows long words to be broken and wrap onto the next line */
+    overflow-wrap: break-word;
+    /* Ensures overflow text is broken and wraps */
+    overflow: hidden;
+    /* Hide overflowed content */
+    text-overflow: ellipsis;
+    /* Show ellipsis when text overflows */
+    white-space: nowrap;
+    /* Keep the text in a single line */
+}
+
+
+#checkIp {
+    padding: 10px 20px;
+    border: none;
+    background-color: #4CAF50;
+    /* Green background */
+    color: white;
+    border-radius: 20px;
+    /* Rounded corners */
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    /* Smooth transition for hover effects */
+}
+
+#checkIp:hover {
+    background-color: #45a049;
+    /* Darker green on hover */
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    /* Shadow effect on hover */
+}
+
+#checkHash {
+    padding: 10px 20px;
+    border: none;
+    background-color: #5ee0f4;
+    /* Green background */
+    color: white;
+    border-radius: 20px;
+    /* Rounded corners */
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    /* Smooth transition for hover effects */
+}
+
+#checkHash:hover {
+    background-color: #53c2d3;
+    /* Darker green on hover */
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    /* Shadow effect on hover */
+}
+
+.score-red {
+    color: #ff6347;
+    /* Tomato red for high risk */
+}
+
+.score-orange {
+    color: #ffa500;
+    /* Orange for medium risk */
+}
+
+.score-yellow {
+    color: #ffd700;
+    /* Yellow for low risk */
+}
+
+.score-green {
+    color: #008000;
+    /* Green for no risk */
+}
+
+.progress-container {
+    width: 90%;
+    background-color: #ddd;
+    border-radius: 10px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 20px;
+    border-radius: 10px;
+    text-align: center;
+    line-height: 20px;
+    color: white;
+    transition: width 0.4s ease;
+}
+
+.progress-bar.score-red {
+    background-color: #ff6347;
+    /* Tomato red for high risk */
+}
+
+.progress-bar.score-orange {
+    background-color: #ffa500;
+    /* Orange for medium risk */
+}
+
+.progress-bar.score-yellow {
+    background-color: #ffd700;
+    /* Yellow for low risk */
+}
+
+.progress-bar.score-green {
+    background-color: #8ae48a;
+    /* Green for no risk */
+}
+
+.hash-value {
+    max-width: calc(100% - 60px);
+    /* Subtracting the label width and some padding */
+    word-wrap: break-word;
+    /* Allows the text to wrap within the container */
+    font-size: 12px;
+    /* Smaller font size for long hashes */
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+/* Container to align the content properly */
+#results {
+    margin: 0 auto;
+    max-width: 90%; /* Adjust the width as needed */
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.circle-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle {
+    transition: stroke-dashoffset 0.6s ease;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.progress-text {
+    font-weight: bold;
+}
+
+.collapse {
+    display: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-left: 20px; /* Adds indentation to the expanded content */
+}
+.content, .collapse {
+    word-wrap: break-word; /* Ensures long words do not overflow their container */
+    white-space: normal; /* Ensures text respects line breaks and whitespace */
+    overflow-wrap: break-word; /* Breaks long words at the end of the line */
+}
+
+.visible {
+    display: block;
+}
+
+.toggle-button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 8px 16px; /* Smaller padding for less obtrusive buttons */
+    margin: 5px 0; /* Reduced margin */
+    cursor: pointer;
+    font-size: 14px; /* Smaller font size for buttons */
+    border-radius: 4px; /* Rounded corners for a modern look */
+}
+
+.toggle-button:hover {
+    background-color: #0056b3;
+}
