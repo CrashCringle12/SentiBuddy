@@ -67,6 +67,29 @@ function toggleVisibility(elementId) {
     element.classList.toggle('visible');
 }
 
+function updateProgress(malicious, total) {
+    const circle = document.querySelector('.progress-circle');
+    const text = document.querySelector('.progress-text');
+    const radius = circle.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    const percent = malicious / total;
+
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = `${(1 - percent) * circumference}`;
+
+    text.textContent = `${malicious} / ${total}`;
+
+    // Determine color based on the number of reports
+    if (malicious === 0) {
+        circle.style.strokeDashoffset = `${0}`;
+        circle.style.stroke = '#008000'; // Green for no reports
+    } else if (malicious <= 14) {
+        circle.style.stroke = '#FFD700'; // Yellow for 2-14 reports
+    } else {
+        circle.style.stroke = '#FF0000'; // Red for more than 14 reports
+    }
+}
+
 function displayResults(response) {
     console.log("Display Results")
     if (response.error) {
@@ -83,6 +106,7 @@ function displayResults(response) {
         console.log("Oh yeah", response)
         // Check if we're doing OSINT on an IP
         if (response.ip) {
+            
             // Check if domain exists and use a default value if it doesn't
             const domain = response.abuseIPDB.domain ? response.abuseIPDB.domain.replace('.', '[.]') : 'No domain available';
 
@@ -121,87 +145,85 @@ function displayResults(response) {
             `;
         // Otherwise we're dealing with a hash.
         } else {
-            // Build the results HTML
-            const body = document.querySelector('body');
-            body.style.minWidth = '420px'; // Wider for hashes
-            // Extract data from the response
-            const vtData = response.VT.data.attributes;
-            const typeUnsupported = vtData.last_analysis_stats['type-unsupported'];
-            document.getElementById('results').innerHTML  = `
-                <h1>OSINT Results</h1>
-                <p><strong>Name:</strong> ${vtData.meaningful_name}</p>
-                <p><strong>Security Vendors:</strong> ${vtData.last_analysis_stats.malicious} out of ${vtData.last_analysis_stats.undetected + vtData.last_analysis_stats.malicious} security vendors and ${typeUnsupported} sandboxes flagged this file as malicious</p>
+            if (response.VT.error) {
+                if (response.VT.error.code == "NotFoundError") {
+                    document.getElementById('results').textContent = response.VT.error.message        
+                } else {
+                    document.getElementById('results').textContent = 'Error fetching data: ' + response.VT.error;        
+                }
+            } else {
+                // Build the results HTML
+                const body = document.querySelector('body');
+                body.style.minWidth = '420px'; // Wider for hashes
+                // Extract data from the response
+                const vtData = response.VT.data.attributes;
+                const typeUnsupported = vtData.last_analysis_stats['type-unsupported'];
+                const threatLabel = (vtData.popular_threat_classification && vtData.popular_threat_classification.suggested_threat_label) ? vtData.popular_threat_classification.suggested_threat_label : "No Threat Label Available";
+                const signature = vtData.signature_info.verified || "Not Signed"
+                const description = vtData.description || vtData.signature_info.description || "No Description Available"
+                const signDate = vtData.signature_info["signing date"] || "N/A"
+                const product = vtData.signature_info.product || "N/A"
+                const copyright = vtData.signature_info.copyright || "N/A"
+                const comments = vtData.signature_info.comments || "No Comments"
+                const signers = vtData.signature_info.signers ? vtData.signature_info.signers.split(';') : ["N/A"]
+                document.getElementById('results').innerHTML  = `
+                    <h1>OSINT Results</h1>
+                    <p><strong>Security Vendors:</strong> ${vtData.last_analysis_stats.malicious} out of ${vtData.last_analysis_stats.undetected + vtData.last_analysis_stats.malicious} security vendors and ${typeUnsupported} sandboxes flagged this file as malicious</p>
+                    <div class="circle-container">
+                    <svg width="120" height="120" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="#ccc" stroke-width="12"/>
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="#f00" stroke-width="12" stroke-dasharray="339.292" stroke-dashoffset="339.292" class="progress-circle"/>
+                        <text x="60" y="65" text-anchor="middle" fill="#333" font-size="20" class="progress-text"></text>
+                    </svg>
+                    </div>
+                    <p><strong>Name:</strong> ${vtData.meaningful_name}</p>
+                    
+                    <button class="toggle-button" id="toggleOtherNames">Other Names</button>
+                    <ul id="otherNames" class="collapse">
+                        ${vtData.names.map(name => `<li>${name}</li>`).join('')}
+                    </ul>
+                    
+                    <button class="toggle-button" id="toggleHashes">Hashes</button>
+                    <div id="hashes" class="collapse">
+                        <p><strong>MD5</strong>: ${vtData.md5}</p>
+                        <p><strong>SHA1</strong>: ${vtData.sha1}</p>
+                        <p><strong>SHA256</strong>: ${vtData.sha256}</p>
+                    </div>
+                    <button class="toggle-button" id="toggleSignatureInfo">Signature Info</button>
+                    <ul id="signatures" class="collapse">
+                        <p><strong>Comments:</strong> ${comments}</p>
+                        <p><strong>Signed:</strong> ${signature}</p>
+                        <p><strong>Signing Date:</strong> ${signDate}</p>
+                        <p><strong>Product:</strong> ${product}</p>
+                        <p><strong>Copyright:</strong> ${copyright}</p>
+                        <strong>Signers: </strong>${Object.entries(signers).map(([index, sig]) => `<li><strong>${(parseInt(index)+1)}:</strong> ${sig}</li>`).join('')}
+                    </ul>
+                    <p><strong>Description:</strong> ${description}</p>
+                    <p><strong>FileType:</strong> ${vtData.type_description}</p>
+                    <p><strong>File Size:</strong> ${vtData.size} bytes</p>
+                    <p><strong>First Submitted:</strong> ${new Date(vtData.first_submission_date * 1000).toLocaleDateString('en-US')}</p>
+                    <p><strong>Popular Threat Label:</strong> ${threatLabel}</p>
+                    <p><strong>Popular Threat Category:</strong> ${vtData.type_tag || "No Threat Category Available"}</p>
+                    
+                    <button class="toggle-button" id="toggleVendorLabels">Vendor Labels</button>
+                    <ul id="vendorLabels" class="collapse">
+                        ${Object.entries(vtData.last_analysis_results).map(([vendor, result]) => `<li><strong>${vendor}</strong>: ${result.result}</li>`).join('')}
+                    </ul>
+                    <p><strong>Tags:</strong> ${vtData.tags.join(', ')}</p>
+                    <a href="virustotal.com" target="_blank">View on VirusTotal</a>
+                `;
                 
-                <button class="toggle-button" id="toggleOtherNames">Other Names</button>
-                <ul id="otherNames" class="collapse">
-                    ${vtData.names.map(name => `<li>${name}</li>`).join('')}
-                </ul>
+                // Example usage:
+                updateProgress(vtData.last_analysis_stats.malicious, vtData.last_analysis_stats.undetected + vtData.last_analysis_stats.malicious); // You would replace these numbers with your actual data
                 
-                <button class="toggle-button" id="toggleHashes">Hashes</button>
-                <div id="hashes" class="collapse">
-                    <p><strong>MD5</strong>: ${vtData.md5}</p>
-                    <p><strong>SHA1</strong>: ${vtData.sha1}</p>
-                    <p><strong>SHA256</strong>: ${vtData.sha256}</p>
-                </div>
-                
-                <p><strong>FileType:</strong> ${vtData.type_description}</p>
-                <p><strong>File Size:</strong> ${vtData.size} bytes</p>
-                <p><strong>Signature:</strong> ${vtData.signature_info ? vtData.signature_info.signer : 'File is not signed'}</p>
-                <p><strong>First Submitted:</strong> ${new Date(vtData.first_submission_date * 1000).toLocaleDateString('en-US')}</p>
-                <p><strong>Popular Threat Label:</strong> ${vtData.popular_threat_classification.suggested_threat_label}</p>
-                <p><strong>Popular Threat Category:</strong> ${vtData.type_tag}</p>
-                
-                <button class="toggle-button" id="toggleVendorLabels">Vendor Labels</button>
-                <ul id="vendorLabels" class="collapse">
-                    ${Object.entries(vtData.last_analysis_results).map(([vendor, result]) => `<li><strong>${vendor}</strong>: ${result.result}</li>`).join('')}
-                </ul>
-                
-                <p><strong>Description:</strong> ${vtData.description}</p>
-                <p><strong>Tags:</strong> ${vtData.tags.join(', ')}</p>
-                <a href="virustotal.com" target="_blank">View on VirusTotal</a>
-            `;
-        
-            // Event listeners for toggling visibility
-            document.getElementById('toggleOtherNames').addEventListener('click', () => toggleVisibility('otherNames'));
-            document.getElementById('toggleHashes').addEventListener('click', () => toggleVisibility('hashes'));
-            document.getElementById('toggleVendorLabels').addEventListener('click', () => toggleVisibility('vendorLabels'));
+
+                // Event listeners for toggling visibility
+                document.getElementById('toggleOtherNames').addEventListener('click', () => toggleVisibility('otherNames'));
+                document.getElementById('toggleHashes').addEventListener('click', () => toggleVisibility('hashes'));
+                document.getElementById('toggleSignatureInfo').addEventListener('click', () => toggleVisibility('signatures'));
+                document.getElementById('toggleVendorLabels').addEventListener('click', () => toggleVisibility('vendorLabels'));
+            }
             
-            // const resultsHTML = `
-            //     <h1>OSINT Results</h1>
-            //     <p><strong>Name:</strong> ${vtData.meaningful_name}</p>
-            //     <p><strong>Security Vendors:</strong> ${vtData.last_analysis_stats.malicious} out of ${vtData.last_analysis_stats.undetected + vtData.last_analysis_stats.malicious} security vendors and ${typeUnsupported} sandboxes flagged this file as malicious</p>
-            //     <button class="toggle-button" data-target="otherNames">Other Names</button>
-            //     <ul id="otherNames" class="collapse" style="display: none;">
-            //         ${vtData.names.map(name => `<li>${name}</li>`).join('')}
-            //     </ul>       
-            //     <button class="toggle-button" data-target="hashes">Hashes</button>
-            //     <div id="hashes" class="collapse" style="display: none;">
-            //         <p>MD5: ${vtData.md5}</p>
-            //         <p>SHA1: ${vtData.sha1}</p>
-            //         <p>SHA256: ${vtData.sha256}</p>
-            //     </div>
-            //     <p><strong>FileType:</strong> ${vtData.type_description}</p>
-            //     <p><strong>File Size:</strong> ${vtData.size} bytes</p>
-            //     <p><strong>Signature:</strong> ${vtData.signature_info ? vtData.signature_info.signer : 'File is not signed'}</p>
-            //     <p><strong>First Submitted:</strong> ${new Date(vtData.first_submission_date * 1000).toLocaleDateString('en-US')}</p>
-            //     <p><strong>Popular Threat Label:</strong> ${vtData.popular_threat_classification.suggested_threat_label}</p>
-            //     <p><strong>Popular Threat Category:</strong> ${vtData.type_tag}</p>
-            //     <button class="toggle-button" data-target="vendorLabels">Vendor Labels</button>
-            //     <ul id="vendorLabels" class="collapse" style="display: none;">
-            //         ${Object.entries(vtData.last_analysis_results).map(([vendor, result]) => `<li>${vendor}: ${result.result}</li>`).join('')}
-            //     </ul>
-            //     <p><strong>Description:</strong> ${vtData.description}</p>
-            //     <p><strong>Tags:</strong> ${vtData.tags.join(', ')}</p>
-            //     <a href="virustotal.com" target="_blank">View on VirusTotal</a>
-            // `;
-            
-            // document.getElementById('results').innerHTML = resultsHTML;
-            // const buttons = document.querySelectorAll('.toggle-button');
-            // buttons.forEach(button => {
-            //     button.addEventListener('click', function() {
-            //         toggleVisibility(this.getAttribute('data-target'));
-            //     });
-            // });
         }
     }
 }
