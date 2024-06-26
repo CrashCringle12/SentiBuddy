@@ -17,6 +17,7 @@ function checkHashType(hash) {
         return 'Unknown';
     }
 }
+
 document.getElementById('checkIp').addEventListener('click', async () => {
     try {
         const text = await navigator.clipboard.readText();
@@ -48,6 +49,21 @@ document.getElementById('checkHash').addEventListener('click', async () => {
         document.getElementById('results').textContent = 'Failed to access clipboard.';
     }
 });
+
+document.getElementById('defangURL').addEventListener('click', async () => {
+    try {
+        const text = await navigator.clipboard.readText();
+        const defangedText = text.replace(/(https?):\/\/(?!.*(virustotal\.com|scamalytics\.com|abuseipdb\.com|spur\.us|urlscan\.io|portal\.azure\.com|exchange\.xforce\.ibmcloud\.com))([\w-]+(\.[\w-]+)+)/gi, (match, p1, p2, p3) => {
+            return p1.replace(/^https?/, 'hxxps') + '[:]//' + p3.replace(/\./g, '[.]');
+        });
+        navigator.clipboard.writeText(defangedText);
+        document.getElementById('results').textContent = 'Clipboard defanged!';
+    } catch (error) {
+        document.getElementById('results').textContent = 'Failed to access clipboard.';
+    }
+});
+
+
 
 
 function getScoreClass(score) {

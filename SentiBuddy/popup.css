@@ -102,6 +102,28 @@ h2 {
     /* Shadow effect on hover */
 }
 
+
+#defangURL {
+    padding: 10px 20px;
+    border: none;
+    background-color: #ff4848;
+    /* Green background */
+    color: white;
+    border-radius: 20px;
+    /* Rounded corners */
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    /* Smooth transition for hover effects */
+}
+
+#defangURL:hover {
+    background-color: #ff6565;
+    /* Darker green on hover */
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    /* Shadow effect on hover */
+}
+
 .score-red {
     color: #ff6347;
     /* Tomato red for high risk */

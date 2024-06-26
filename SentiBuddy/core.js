@@ -20,6 +20,7 @@ function loadConfig() {
     doRemoveFromFilteredFromQueue: true, // Default values if not set
     filterTitleRegexPatterns: [],
     filterTagsRegexPatterns: [],
+    filterOwnerRegexPatterns: [],
     onlyAlertOnLatest: true,
     desktopNotifications: true
   }, (items) => {
@@ -27,6 +28,7 @@ function loadConfig() {
           doRemoveFromFilteredFromQueue: items.doRemoveFromFilteredFromQueue,
           filterTitleRegexPatterns: items.filterTitleRegexPatterns,
           filterTagsRegexPatterns: items.filterTagsRegexPatterns,
+          filterOwnerRegexPatterns: items.filterOwnerRegexPatterns,
           onlyAlertOnLatest: items.onlyAlertOnLatest,
           desktopNotifications: items.desktopNotifications
       };
@@ -36,16 +38,18 @@ function loadConfig() {
 }
 loadConfig();
 
-function checkTitleAgainstPatterns(title, patterns) {
+function checkWordAgainstPatterns(title, patterns) {
   for (let pattern of patterns) {
     let regex = new RegExp(pattern);
     if (regex.test(title)) {
-      console.log(`Title matches pattern: ${pattern}`);
+      console.log(`{{ ${title} }}: matches pattern: ${pattern}`);
       return true;
     }
   }
   return false;
 }
+
+
 function checkTagsAgainstPatterns(tags, patterns) {
   //console.log("Testing Tags")
   for (let pattern of patterns) {
@@ -114,16 +118,18 @@ var checkAndUpdateIncident = function (client, incID, currentSeverity, owner, st
   var incident = incidents[client+incID];
   var eventType = "NONE"
   if (incident) {
-    if (incident.owner != owner) {
-      console.log(incID + " Incident has a new Owner")
-      eventType = owner + " claimed";
-    } else if (incident.severity != currentSeverity) {
-      console.log(incID + " Incident ID seen before but severity changed.");
-      eventType = incident.severity + " -->";
-    } else if (incident.status != status) {
-      eventType = "Updated";
-    } else {
-      //console.log("This incident " + incID + " has been seen before");
+    if (incident.owner != "Assign to me") {
+        if (incident.owner != owner) {
+          console.log(incID + " Incident has a new Owner")
+          eventType = owner + " claimed";
+        } else if (incident.severity != currentSeverity) {
+          console.log(incID + " Incident ID seen before but severity changed.");
+          eventType = incident.severity + " -->";
+        } else if (incident.status != status) {
+          eventType = "Updated";
+        } else {
+          //console.log("This incident " + incID + " has been seen before");
+        }
     }
   } else {
     // New Incident ID
@@ -135,6 +141,8 @@ var checkAndUpdateIncident = function (client, incID, currentSeverity, owner, st
   incidents[client+incID] = { severity: currentSeverity, status: status, owner: owner, lastSeen: new Date().toISOString() };
   return eventType;
 }
+
+
 // Whenever the user clicks something, create an observer that will
 // notify background so the notification can be triggered.
 var defaultQueue = function () {
@@ -153,6 +161,7 @@ var defaultQueue = function () {
   if (observer) {
     observer.disconnect();
     DOMObserver.disconnect();
+
     targetElem.classList.remove(ELEMENT_CHANGED_CLASSNAME);
   }
 
@@ -202,7 +211,8 @@ var defaultQueue = function () {
         }
         var eventType = checkAndUpdateIncident(client, incID, severity, owner, status);
         
-        var incMatchesRegex = checkTitleAgainstPatterns(title, config.filterTitleRegexPatterns);
+        var incMatchesRegex = checkWordAgainstPatterns(title, config.filterTitleRegexPatterns);
+        var incMatchesRegex = incMatchesRegex ? incMatchesRegex : checkWordAgainstPatterns(owner, config.filterOwnerRegexPatterns)
         var incMatchesRegex = incMatchesRegex ? incMatchesRegex : checkTagsAgainstPatterns(tags, config.filterTagsRegexPatterns)
         if (incMatchesRegex && doRemoveFromQueue) {
           console.log("Hiding " + client + " " + incID);
@@ -243,7 +253,7 @@ var defaultQueue = function () {
       }
 
     });
-    console.log(incidents)
+   // console.log(incidents)
     // Disconnect the observer temporarily so we can set the class name
     // to avoid triggering and endless loop.
     observer.disconnect();
@@ -256,7 +266,8 @@ var defaultQueue = function () {
   });
 
   observer.observe(targetElem, { childList: true, subtree: true, characterData: true, attributes: true });
-
+  
+  
   DOMObserver = new MutationObserver(function (mutations) {
     for (const m of mutations) {
       // A removal happened in the DOM, let's
@@ -285,6 +296,7 @@ var defaultQueue = function () {
 
 var addListeners = function () {
   document.addEventListener('mousemove', highlightFunc, false);
+  
 }
 
 var removeListeners = function () {
@@ -318,3 +330,4 @@ chrome.runtime.onMessage.addListener(function (request) {
     enabled = !enabled;
   }
 });
+
