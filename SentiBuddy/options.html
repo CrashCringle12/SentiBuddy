@@ -3,27 +3,54 @@
 
 <head>
     <title>SentiBuddy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        label {
+            font-weight: bold; /* Make labels bold */
+        }
+        .button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #save {
+            color: #fff;
+            background-color: #007bff;
+        }
+        #save:hover {
+            background-color: #0056b3;
+        }
+        #export, #import {
+            color: #fff; /* White text for visibility */
+            background-color: #555; /* Darker background for buttons */
+            margin-left: 5px;
+        }
+        #export:hover, #import:hover {
+            background-color: #333; /* Even darker on hover */
+        }
+        #status {
+            margin-top: 10px;
+            color: #28a745;
+        }
+    </style>
 </head>
-
 <body>
     <h1>Extension Configuration</h1>
-
+    <button id="save" class="button">Save Config</button>
+    <button id="export" class="button">Export Config</button>
+    <button id="import" class="button">Import Config</button>
+    <div id="status"></div>
+    <br>
     <label>
         Remove from Filtered Queue:
         <input type="checkbox" id="removeFromQueue" />
     </label>
-    <br>
-    <label>Filter Title Regex Patterns:</label>
-    <div id="titlePatterns"></div>
-    <button type="button" id="addTitlePattern">Add Pattern</button>
-    <br>
-    <label>Filter Tags Regex Patterns:</label>
-    <div id="tagPatterns"></div>
-    <button type="button" id="addTagPattern">Add Pattern</button>
-    <br>
-    <label>Filter Owner Regex Patterns:</label>
-    <div id="ownerPatterns"></div>
-    <button type="button" id="addOwnerPattern">Add Pattern</button>
     <br>
     <label>
         Enable Desktop Notifications:
@@ -55,9 +82,21 @@
         <input type="text" id="scamalyticsURL" />
     </label>
     <br>
-    <div id="status"></div>
-    <button id="save">Save</button>
-
+    <br>
+    <label><b>Filter Title Regex Patterns:</b></label>
+    <div id="titlePatterns"></div>
+    <button type="button" id="addTitlePattern">Add Pattern</button>
+    <br>
+    <br>
+    <label><b>Filter Tags Regex Patterns:</b></label>
+    <div id="tagPatterns"></div>
+    <button type="button" id="addTagPattern">Add Pattern</button>
+    <br>
+    <br>
+    <label><b>Filter Owner Regex Patterns:</b></label>
+    <div id="ownerPatterns"></div>
+    <button type="button" id="addOwnerPattern">Add Pattern</button>
+    <br>
     <script src="options.js"></script>
 </body>
 
