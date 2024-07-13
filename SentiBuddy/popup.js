@@ -28,6 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
             startQueueButton.innerHTML = 'Start Queue Filtering';
         }
     });
+
+    // Add event listener for the new button
+    document.getElementById('openNoteTaking').addEventListener('click', () => {
+        chrome.windows.create({
+            url: chrome.runtime.getURL("note_gen/index.html"),
+            type: "popup",
+            width: 800,
+            height: 600
+        });
+    });
+
 });
 
 document.getElementById('checkIp').addEventListener('click', async () => {

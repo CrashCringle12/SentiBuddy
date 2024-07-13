@@ -65,7 +65,7 @@
     },
     "web_accessible_resources": [
         {
-          "resources": ["_favicon/*", "options.html", "popup.html"],
+          "resources": ["_favicon/*", "options.html", "popup.html", "note_gen/*"],
           "matches": ["https://portal.azure.com/*","https://api.abuseipdb.com/*", "https://www.virustotal.com/*", "https://api11.scamalytics.com/*"],
           "extension_ids": ["*"]
         }

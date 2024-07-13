@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clients Configuration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        label {
+            font-weight: bold;
+        }
+        .button {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #save {
+            color: #fff;
+            background-color: #007bff;
+        }
+        #save:hover {
+            background-color: #0056b3;
+        }
+        #addClient {
+            color: #fff;
+            background-color: #28a745;
+            margin-left: 5px;
+        }
+        #addClient:hover {
+            background-color: #218838;
+        }
+        #status {
+            margin-top: 10px;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clients Configuration</h1>
+    <div id="clientsList"></div>
+    <button id="addClient" class="button">Add Client</button>
+    <button id="save" class="button">Save Clients</button>
+    <div id="status"></div>
+    <script src="options_clients.js"></script>
+</body>
+</html>

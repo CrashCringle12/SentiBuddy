@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>SentiBuddy</title>
     <style>
@@ -38,66 +37,117 @@
             margin-top: 10px;
             color: #28a745;
         }
+        .tab {
+            overflow: hidden;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            justify-content: space-between;
+        }
+        .tab button {
+            background-color: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px 0;
+        }
+        .tabcontent.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
     <h1>Extension Configuration</h1>
-    <button id="save" class="button">Save Config</button>
-    <button id="export" class="button">Export Config</button>
-    <button id="import" class="button">Import Config</button>
-    <div id="status"></div>
-    <br>
-    <label>
-        Remove from Filtered Queue:
-        <input type="checkbox" id="removeFromQueue" />
-    </label>
-    <br>
-    <label>
-        Enable Desktop Notifications:
-        <input type="checkbox" id="desktopNotifications" />
-    </label>
-    <br>
-    <label>
-        Only Notify On Latest:
-        <input type="checkbox" id="alertOnLatest" />
-    </label>
-    <br>
-    <label>
-        AbuseIPDB API Key:
-        <input type="text" id="abuseipdbAPIkey" />
-    </label>
-    <br>
-    <label>
-        VT API Key:
-        <input type="text" id="vtkey" />
-    </label>
-    <br>
-    <label>
-        Ip Info API Key:
-        <input type="text" id="ipInfoKey" />
-    </label>
-    <br>
-    <label>
-        Scamalytics URL:
-        <input type="text" id="scamalyticsURL" />
-    </label>
-    <br>
-    <br>
-    <label><b>Filter Title Regex Patterns:</b></label>
-    <div id="titlePatterns"></div>
-    <button type="button" id="addTitlePattern">Add Pattern</button>
-    <br>
-    <br>
-    <label><b>Filter Tags Regex Patterns:</b></label>
-    <div id="tagPatterns"></div>
-    <button type="button" id="addTagPattern">Add Pattern</button>
-    <br>
-    <br>
-    <label><b>Filter Owner Regex Patterns:</b></label>
-    <div id="ownerPatterns"></div>
-    <button type="button" id="addOwnerPattern">Add Pattern</button>
-    <br>
+    <div class="tab">
+        <button id="generalOptionsTab" class="tablinks">General Options</button>
+        <button id="noteTakingOptionsTab" class="tablinks">Note-Taking Options</button>
+    </div>
+    <div id="GeneralOptions" class="tabcontent">
+        <button id="save" class="button">Save Config</button>
+        <button id="export" class="button">Export Config</button>
+        <button id="import" class="button">Import Config</button>
+        <div id="status"></div>
+        <br>
+        <label>
+            Remove from Filtered Queue:
+            <input type="checkbox" id="removeFromQueue" />
+        </label>
+        <br>
+        <label>
+            Enable Desktop Notifications:
+            <input type="checkbox" id="desktopNotifications" />
+        </label>
+        <br>
+        <label>
+            Only Notify On Latest:
+            <input type="checkbox" id="alertOnLatest" />
+        </label>
+        <br>
+        <label>
+            AbuseIPDB API Key:
+            <input type="text" id="abuseipdbAPIkey" />
+        </label>
+        <br>
+        <label>
+            VT API Key:
+            <input type="text" id="vtkey" />
+        </label>
+        <br>
+        <label>
+            Ip Info API Key:
+            <input type="text" id="ipInfoKey" />
+        </label>
+        <br>
+        <label>
+            Scamalytics URL:
+            <input type="text" id="scamalyticsURL" />
+        </label>
+        <br>
+        <br>
+        <label><b>Filter Title Regex Patterns:</b></label>
+        <div id="titlePatterns"></div>
+        <button type="button" id="addTitlePattern">Add Pattern</button>
+        <br>
+        <br>
+        <label><b>Filter Tags Regex Patterns:</b></label>
+        <div id="tagPatterns"></div>
+        <button type="button" id="addTagPattern">Add Pattern</button>
+        <br>
+        <br>
+        <label><b>Filter Owner Regex Patterns:</b></label>
+        <div id="ownerPatterns"></div>
+        <button type="button" id="addOwnerPattern">Add Pattern</button>
+    </div>
+    <div id="NoteTakingOptions" class="tabcontent">
+        <button id="saveNoteTaking" class="button">Save Note-Taking Config</button>
+        <div id="statusNoteTaking"></div>
+        <br>
+        <label>
+            Default Incident Number Prefix:
+            <input type="text" id="incidentPrefix" />
+        </label>
+        <br>
+        <label>
+            Default Template:
+            <input type="text" id="defaultTemplate" />
+        </label>
+        <br>
+        <div id="clientsList"></div>
+        <button id="addClient" class="button">Add Client</button>
+        <button id="saveClients" class="button">Save Clients</button>
+        <div id="statusClients"></div>
+    </div>
     <script src="options.js"></script>
 </body>
-
 </html>

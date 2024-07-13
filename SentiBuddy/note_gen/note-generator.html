@@ -1,0 +1,59 @@
+<html>
+<head>
+  <title>Note Generator</title>
+  <link rel="stylesheet" type="text/css" href="../styles.css">
+  <link rel="stylesheet" type="text/css" href="note-generator.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Note Generator</h1>
+    <div class="input-group">
+      <label for="incidentNumber">Incident Number:</label>
+      <input type="text" id="incidentNumber" required>
+    </div>
+    <div class="input-group">
+      <label for="clientDropdown">Select Client:</label>
+      <select id="clientDropdown"></select>
+    </div>
+    <div class="input-group">
+      <div class="autocomplete">
+        <label for="templateSearch">Search for a template:</label>
+        <input type="text" id="templateSearch">
+      </div>
+      <button id="loadButton">Load Template</button>
+    </div>
+    <div class="template-info">
+      <div id="templateInfo"></div>
+    </div>
+    <div class="template-container">
+      <div class="template-content">
+        <textarea id="templateContent" readonly></textarea>
+      </div>
+    </div>
+    <div id="variableForm"></div>
+    <div class="kql-queries">
+      <textarea id="kqlQueries" readonly></textarea>
+    </div>
+    <div class="button-group">
+      <button id="updateQueryButton">Update Query</button>
+      <button id="populateButton">Populate Template</button>
+    </div>
+    <div id="savePopup" class="popup">
+      <div class="popup-content">
+        <span class="close-button">&times;</span>
+        <textarea id="populatedTemplate"></textarea>
+        <button id="saveButton">Save Note</button>
+      </div>
+    </div>
+    <div id="formattedPopup" class="popup">
+      <div class="popup-content">
+        <span class="close-button">&times;</span>
+        <div id="formattedTemplate"></div>
+      </div>
+    </div>
+  </div>
+  <script src="note-generator.js"></script>
+  <script src="timer.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
