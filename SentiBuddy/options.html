@@ -18,19 +18,19 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        #save {
+        #save, #saveNoteTaking {
             color: #fff;
             background-color: #007bff;
         }
-        #save:hover {
+        #save:hover, #saveNoteTaking:hover {
             background-color: #0056b3;
         }
-        #export, #import {
+        #export, #import, #exportNoteTaking, #importNoteTaking {
             color: #fff; /* White text for visibility */
             background-color: #555; /* Darker background for buttons */
             margin-left: 5px;
         }
-        #export:hover, #import:hover {
+        #export:hover, #import:hover, #exportNoteTaking:hover, #importNoteTaking:hover {
             background-color: #333; /* Even darker on hover */
         }
         #status {
@@ -130,7 +130,9 @@
         <button type="button" id="addOwnerPattern">Add Pattern</button>
     </div>
     <div id="NoteTakingOptions" class="tabcontent">
-        <button id="saveNoteTaking" class="button">Save Note-Taking Config</button>
+        <button id="saveNoteTaking" class="button">Save Notes Config</button>
+        <button id="exportNoteTaking" class="button">Export Notes Config</button>
+        <button id="importNoteTaking" class="button">Import Notes Config</button>
         <div id="statusNoteTaking"></div>
         <br>
         <label>
@@ -145,8 +147,6 @@
         <br>
         <div id="clientsList"></div>
         <button id="addClient" class="button">Add Client</button>
-        <button id="saveClients" class="button">Save Clients</button>
-        <div id="statusClients"></div>
     </div>
     <script src="options.js"></script>
 </body>

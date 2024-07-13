@@ -9,7 +9,7 @@ var VTkey = '';
 var scamalyticsURL = '';
 var ipInfoKey = '';
 function loadKeys() {
-  chrome.storage.sync.get({
+  chrome.storage.local.get({
     abuseipdbAPIkey: '',
     vtkey: '',
     scamalyticsURL: '',

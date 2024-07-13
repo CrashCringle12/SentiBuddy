@@ -15,7 +15,7 @@ deletedElementsComponent.classList.add('deleted-nav');
 var config = {};
 var doRemoveFromQueue = true;
 function loadConfig() {
-  chrome.storage.sync.get({
+  chrome.storage.local.get({
     doRemoveFromFilteredFromQueue: true, // Default values if not set
     filterTitleRegexPatterns: [],
     filterTagsRegexPatterns: [],

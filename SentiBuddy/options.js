@@ -11,15 +11,26 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
-
 // Note-Taking Options Functions
 function saveNoteTakingOptions() {
     const incidentPrefix = document.getElementById('incidentPrefix').value.trim();
     const defaultTemplate = document.getElementById('defaultTemplate').value.trim();
+    const clientsList = document.getElementById('clientsList');
+    const clients = [];
+    const inputs = clientsList.getElementsByTagName('input');
+
+    for (let i = 0; i < inputs.length; i += 2) {
+        const name = inputs[i].value.trim();
+        const projectCode = inputs[i + 1].value.trim();
+        if (name && projectCode) {
+            clients.push({ name, projectCode });
+        }
+    }
 
     chrome.storage.local.set({
         incidentPrefix: incidentPrefix,
-        defaultTemplate: defaultTemplate
+        defaultTemplate: defaultTemplate,
+        clients: clients
     }, () => {
         const status = document.getElementById('statusNoteTaking');
         status.textContent = 'Note-Taking options saved.';
@@ -30,11 +41,14 @@ function saveNoteTakingOptions() {
 }
 
 function restoreNoteTakingOptions() {
-    chrome.storage.local.get(['incidentPrefix', 'defaultTemplate'], (items) => {
+    chrome.storage.local.get(['incidentPrefix', 'defaultTemplate', 'clients'], (items) => {
         document.getElementById('incidentPrefix').value = items.incidentPrefix || '';
         document.getElementById('defaultTemplate').value = items.defaultTemplate || '';
+        const clients = items.clients || [];
+        clients.forEach(client => addClient(client.name, client.projectCode));
     });
 }
+
 // Client Options Functions
 function addClient(name = '', projectCode = '') {
     const clientsList = document.getElementById('clientsList');
@@ -62,36 +76,6 @@ function addClient(name = '', projectCode = '') {
 
     clientsList.appendChild(div);
 }
-
-function saveClients() {
-    const clientsList = document.getElementById('clientsList');
-    const clients = [];
-    const inputs = clientsList.getElementsByTagName('input');
-
-    for (let i = 0; i < inputs.length; i += 2) {
-        const name = inputs[i].value.trim();
-        const projectCode = inputs[i + 1].value.trim();
-        if (name && projectCode) {
-            clients.push([name, projectCode]);
-        }
-    }
-
-    chrome.storage.local.set({ clients: clients }, function() {
-        const status = document.getElementById('statusClients');
-        status.textContent = 'Clients saved.';
-        setTimeout(() => {
-            status.textContent = '';
-        }, 750);
-    });
-}
-
-function restoreClients() {
-    chrome.storage.local.get('clients', function(result) {
-        const clients = result.clients || [];
-        clients.forEach(client => addClient(client[0], client[1]));
-    });
-}
-
 
 function addPattern(containerId, value = '') {
     const container = document.getElementById(containerId);
@@ -122,7 +106,7 @@ const saveOptions = () => {
     const vtkey = document.getElementById('vtkey').value.trim();
     const scamalyticsURL = document.getElementById('scamalyticsURL').value.trim();
     
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
         doRemoveFromFilteredFromQueue: removeFromQueue,
         filterTitleRegexPatterns: titlePatterns,
         filterTagsRegexPatterns: tagPatterns,
@@ -143,7 +127,7 @@ const saveOptions = () => {
 };
 
 function restoreOptions() {
-    chrome.storage.sync.get({
+    chrome.storage.local.get({
         doRemoveFromFilteredFromQueue: true,
         filterTitleRegexPatterns: [],
         filterTagsRegexPatterns: [],
@@ -155,7 +139,6 @@ function restoreOptions() {
         ipInfoKey: '',
         scamalyticsURL: ''
     }, (items) => {
-        
         document.getElementById('removeFromQueue').checked = items.doRemoveFromFilteredFromQueue;
         document.getElementById('alertOnLatest').checked = items.onlyAlertOnLatest;
         document.getElementById('desktopNotifications').checked = items.desktopNotifications;
@@ -165,11 +148,12 @@ function restoreOptions() {
         document.getElementById('abuseipdbAPIkey').value = items.abuseipdbAPIkey;
         document.getElementById('vtkey').value = items.vtkey;
         document.getElementById('ipInfoKey').value = items.ipInfoKey;
-        document.getElementById('scamalyticsURL').value = items.scamalyticsURL
+        document.getElementById('scamalyticsURL').value = items.scamalyticsURL;
     });
 }
+
 function exportOptions() {
-    chrome.storage.sync.get({
+    chrome.storage.local.get({
         doRemoveFromFilteredFromQueue: true,
         filterTitleRegexPatterns: [],
         filterTagsRegexPatterns: [],
@@ -182,7 +166,7 @@ function exportOptions() {
         scamalyticsURL: ''
     }, (items) => {
         const jsonData = JSON.stringify(items, null, 4);
-        const blob = new Blob([jsonData], {type: "application/json"});
+        const blob = new Blob([jsonData], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -191,6 +175,7 @@ function exportOptions() {
         URL.revokeObjectURL(url);
     });
 }
+
 function importOptions(event) {
     const file = event.target.files[0];
     if (!file) {
@@ -207,7 +192,7 @@ function importOptions(event) {
             jsonObj.filterTagsRegexPatterns = [...new Set(jsonObj.filterTagsRegexPatterns)];
             jsonObj.filterOwnerRegexPatterns = [...new Set(jsonObj.filterOwnerRegexPatterns)];
 
-            chrome.storage.sync.set(jsonObj, () => {
+            chrome.storage.local.set(jsonObj, () => {
                 console.log('Options imported and duplicates removed successfully');
                 restoreOptions(); // Refresh the UI to reflect the imported data
             });
@@ -225,21 +210,83 @@ function createFileInput() {
     fileInput.click();
 }
 
+// Export and Import Note-Taking Data Functions
+function exportNoteTakingData() {
+    chrome.storage.local.get(['incidentPrefix', 'defaultTemplate', 'clients', 'templates'], (items) => {
+        const jsonData = JSON.stringify(items, null, 4);
+        const blob = new Blob([jsonData], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "note_taking_data.json";
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+}
+
+function importNoteTakingData(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const jsonObj = JSON.parse(event.target.result);
+
+            // Save imported data to local storage
+            chrome.storage.local.set(jsonObj, () => {
+                console.log('Note-taking data imported successfully');
+                restoreNoteTakingOptions(); // Refresh the UI to reflect the imported data
+                fetchTemplateFiles();
+            });
+        } catch (e) {
+            console.error('Failed to parse note-taking data file:', e);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function createImportFileInput() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.addEventListener('change', importNoteTakingData);
+    fileInput.click();
+}
+
+// Function to fetch the list of template files from Chrome storage
+function fetchTemplateFiles() {
+    chrome.storage.local.get('templates', function(data) {
+        if (data.templates) {
+            templateFiles = data.templates.map(template => template.name);
+        } else {
+            console.error('No templates found in storage');
+        }
+    });
+}
+
+// Restore options on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById("generalOptionsTab").addEventListener('click', (evt) => openTab(evt, 'GeneralOptions'));
     document.getElementById("noteTakingOptionsTab").addEventListener('click', (evt) => openTab(evt, 'NoteTakingOptions'));
     restoreOptions();
     restoreNoteTakingOptions();
-    restoreClients();
+    fetchTemplateFiles();
 });
+
+// Event listeners for general options
 document.getElementById('addTitlePattern').addEventListener('click', () => addPattern('titlePatterns'));
 document.getElementById('addTagPattern').addEventListener('click', () => addPattern('tagPatterns'));
 document.getElementById('addOwnerPattern').addEventListener('click', () => addPattern('ownerPatterns'));
-document.getElementById('save').addEventListener('click', () => saveOptions());
+document.getElementById('save').addEventListener('click', saveOptions);
 document.getElementById('export').addEventListener('click', exportOptions);
 document.getElementById('import').addEventListener('click', createFileInput);
 
-
+// Event listeners for note-taking options
 document.getElementById('saveNoteTaking').addEventListener('click', saveNoteTakingOptions);
+document.getElementById('exportNoteTaking').addEventListener('click', exportNoteTakingData);
+document.getElementById('importNoteTaking').addEventListener('click', createImportFileInput);
+
+// Event listeners for client options
 document.getElementById('addClient').addEventListener('click', () => addClient());
-document.getElementById('saveClients').addEventListener('click', saveClients);

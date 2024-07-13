@@ -10,6 +10,24 @@ const saveButton = document.getElementById('saveButton');
 
 let templateFiles = [];
 
+// Function to fetch clients from chrome.storage.local
+function fetchClients() {
+  console.log('Fetching clients...'); // Add this line
+  chrome.storage.local.get('clients', (result) => {
+      const clients = result.clients || [];
+      console.log('Received clients:', clients); // Add this line
+      const clientDropdown = document.getElementById('clientDropdown');
+      clientDropdown.innerHTML = ''; // Clear existing options
+      clients.forEach(client => {
+          const option = document.createElement('option');
+          option.value = client.name;
+          option.textContent = client.name;
+          option.dataset.projectCode = client.projectCode;
+          clientDropdown.appendChild(option);
+      });
+  });
+}
+
 // Function to fetch the list of template files from Chrome storage
 function fetchTemplateFiles() {
     chrome.storage.local.get('templates', function(data) {
@@ -255,7 +273,7 @@ function applyHtmlFormatting(content) {
 }
 
 // Function to save the populated template to Chrome storage
-function saveTemplate() {
+function saveNote() {
     const incidentNumber = incidentNumberInput.value;
     const populatedTemplate = document.getElementById('populatedTemplate').value;
 
@@ -410,11 +428,12 @@ function autocomplete(input, options) {
     });
 }
 
+window.addEventListener('DOMContentLoaded', fetchClients);
 // Event listeners
 loadButton.addEventListener('click', loadTemplateFile);
 populateButton.addEventListener('click', populateTemplate);
 updateQueryButton.addEventListener('click', updateQuery);
-saveButton.addEventListener('click', saveTemplate);
+saveButton.addEventListener('click', saveNote);
 
 // Fetch template files on page load
 fetchTemplateFiles();
