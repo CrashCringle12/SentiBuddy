@@ -1,4 +1,5 @@
 const notificationTab = {};
+let queueActive = false;
 
 const maxAgeInDays = 90;
 const verbose = true;  // This is a flag, typically set to get detailed responses
@@ -149,7 +150,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ error: error.toString() });
     });
     return true;  // Must return true when async response is expected
-  } else {
+  } else  if (request.type === 'get-queue-state') {
+    sendResponse({ active: queueActive });
+  } else if (request.type === 'toggle-queue-filtering') {
+    queueActive = !queueActive;
+    if (queueActive) {
+        browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            browser.tabs.sendMessage(tabs[0].id, { type: 'start-queue-filtering' });
+        });
+    } else {
+        browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            browser.tabs.sendMessage(tabs[0].id, { type: 'stop-queue-filtering' });
+        });
+    }
+    sendResponse({ active: queueActive });
+  }else {
     console.log(request.type)
   }
 });

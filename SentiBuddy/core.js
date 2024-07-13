@@ -7,7 +7,6 @@ let observer, targetElem, DOMObserver;
 let targetParents = [];
 
 let incidents = {};
-var initializing = true
 // Previous dom, that we want to track, so we can remove the previous styling.
 var prevDOM = null;
 
@@ -37,7 +36,7 @@ function loadConfig() {
     });
 }
 loadConfig();
-
+var initializing = config.desktopNotifications
 function checkWordAgainstPatterns(title, patterns) {
   for (let pattern of patterns) {
     let regex = new RegExp(pattern);
@@ -328,6 +327,9 @@ chrome.runtime.onMessage.addListener(function (request) {
       }
     }
     enabled = !enabled;
+  } else if (request.type === 'start-queue-filtering') {
+    // Call your function to start queue filtering
+    defaultQueue();  // Assuming this is the function that starts the queue filtering
   }
 });
 

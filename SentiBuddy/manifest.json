@@ -54,7 +54,7 @@
     "content_scripts": [
       {
         "matches": ["https://portal.azure.com/*", "https://api.abuseipdb.com/*", "https://www.virustotal.com/*", "https://api11.scamalytics.com/*"],
-        "css": ["core.css"],
+        "css": ["css/core.css"],
         "js": ["core.js"],
         "run_at": "document_end",
         "all_frames": true
