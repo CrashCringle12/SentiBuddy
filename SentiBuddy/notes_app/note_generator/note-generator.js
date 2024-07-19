@@ -12,20 +12,20 @@ let templateFiles = [];
 
 // Function to fetch clients from chrome.storage.local
 function fetchClients() {
-  console.log('Fetching clients...'); // Add this line
-  chrome.storage.local.get('clients', (result) => {
-      const clients = result.clients || [];
-      console.log('Received clients:', clients); // Add this line
-      const clientDropdown = document.getElementById('clientDropdown');
-      clientDropdown.innerHTML = ''; // Clear existing options
-      clients.forEach(client => {
-          const option = document.createElement('option');
-          option.value = client.name;
-          option.textContent = client.name;
-          option.dataset.projectCode = client.projectCode;
-          clientDropdown.appendChild(option);
-      });
-  });
+    console.log('Fetching clients...');
+    chrome.storage.local.get('clients', (result) => {
+        const clients = result.clients || [];
+        console.log('Received clients:', clients);
+        const clientDropdown = document.getElementById('clientDropdown');
+        clientDropdown.innerHTML = ''; // Clear existing options
+        clients.forEach(client => {
+            const option = document.createElement('option');
+            option.value = client.name;
+            option.textContent = client.name;
+            option.dataset.projectCode = client.projectCode;
+            clientDropdown.appendChild(option);
+        });
+    });
 }
 
 // Function to fetch the list of template files from Chrome storage
@@ -40,23 +40,23 @@ function fetchTemplateFiles() {
 
 // Function to load the selected template from Chrome storage
 function loadTemplateFile() {
-  const selectedTemplateName = templateSearchInput.value;
-  chrome.storage.local.get('templates', function(data) {
-      if (data.templates) {
-          const template = data.templates.find(t => t.name === selectedTemplateName);
-          if (template) {
-              const { variables, info, kqlQueries, contentWithoutKql } = extractVariables(template.content);
-              templateContentTextarea.value = contentWithoutKql;
-              document.getElementById('templateInfo').textContent = info;
-              generateVariableForm(variables);
-              kqlQueriesTextarea.value = kqlQueries.join('\n\n```\n```\n\n');
-          } else {
-              console.error('Template not found');
-          }
-      } else {
-          console.error('No templates found in storage');
-      }
-  });
+    const selectedTemplateName = templateSearchInput.value;
+    chrome.storage.local.get('templates', function(data) {
+        if (data.templates) {
+            const template = data.templates.find(t => t.name === selectedTemplateName);
+            if (template) {
+                const { variables, info, kqlQueries, contentWithoutKql } = extractVariables(template.content);
+                templateContentTextarea.value = contentWithoutKql;
+                document.getElementById('templateInfo').textContent = info;
+                generateVariableForm(variables);
+                kqlQueriesTextarea.value = kqlQueries.join('\n\n```\n```\n\n');
+            } else {
+                console.error('Template not found');
+            }
+        } else {
+            console.error('No templates found in storage');
+        }
+    });
 }
 
 
@@ -101,12 +101,18 @@ function generateVariableForm(variables) {
     variableForm.innerHTML = '';
 
     variables.forEach(variable => {
+        const formGroup = document.createElement('div');
+        formGroup.className = 'input-group';
+
         const label = document.createElement('label');
         label.textContent = variable;
         label.setAttribute('for', variable);
 
         if (variable.includes('/')) {
-            const checkboxes = variable.split('/').map(option => {
+            const checkboxGroup = document.createElement('div');
+            checkboxGroup.className = 'checkbox-group';
+
+            variable.split('/').forEach(option => {
                 const checkbox = document.createElement('input');
                 checkbox.setAttribute('type', 'checkbox');
                 checkbox.setAttribute('id', option);
@@ -117,26 +123,24 @@ function generateVariableForm(variables) {
                 checkboxLabel.textContent = option;
                 checkboxLabel.setAttribute('for', option);
 
-                return { checkbox, checkboxLabel };
+                checkboxGroup.appendChild(checkbox);
+                checkboxGroup.appendChild(checkboxLabel);
             });
 
-            checkboxes.forEach(({ checkbox, checkboxLabel }) => {
-                variableForm.appendChild(checkbox);
-                variableForm.appendChild(checkboxLabel);
-            });
+            formGroup.appendChild(label);
+            formGroup.appendChild(checkboxGroup);
         } else {
             const input = document.createElement('input');
             input.setAttribute('type', 'text');
             input.setAttribute('id', variable);
 
-            variableForm.appendChild(label);
-            variableForm.appendChild(input);
+            formGroup.appendChild(label);
+            formGroup.appendChild(input);
         }
 
-        variableForm.appendChild(document.createElement('br'));
+        variableForm.appendChild(formGroup);
     });
 }
-
 // Function to populate the template with variables
 function populateTemplate() {
     const templateContent = templateContentTextarea.value;
@@ -428,12 +432,13 @@ function autocomplete(input, options) {
     });
 }
 
-window.addEventListener('DOMContentLoaded', fetchClients);
 // Event listeners
+window.addEventListener('DOMContentLoaded', fetchClients);
 loadButton.addEventListener('click', loadTemplateFile);
 populateButton.addEventListener('click', populateTemplate);
 updateQueryButton.addEventListener('click', updateQuery);
 saveButton.addEventListener('click', saveNote);
-
 // Fetch template files on page load
 fetchTemplateFiles();
+
+

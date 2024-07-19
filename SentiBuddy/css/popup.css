@@ -1,9 +1,27 @@
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #f4f4f4;
+    border-radius: 20px;
+    z-index: -1;
+}
+
 body {
-    max-width: 100%;
-    min-width: 320px;
-    min-height: 420px;
-    font-family: Arial, sans-serif;
+    margin: 0;
     padding: 10px;
+    background: transparent;
+}
+
+#popup-content {
+    max-width: 100%;
+    min-width: 300px;
+    min-height: 400px;
+    font-family: Arial, sans-serif;
+    padding: 20px;
     font-size: 14px;
     display: flex;
     flex-direction: column;
@@ -11,66 +29,11 @@ body {
     justify-content: center;
     color: #333;
     background-color: #f4f4f4;
-}
-
-.button-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-button {
-    padding: 10px 20px;
-    border: none;
     border-radius: 20px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-bottom: 1px;
-    width: 90%;
-    max-width: 300px;
-    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
-#startQueueFiltering {
-    background-color: #2878f8;
-    color: white;
-}
-
-#startQueueFiltering:hover {
-    background-color: #5d99f9;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
-
-#defangURL {
-    background-color: #ff4848;
-    color: white;
-}
-
-#defangURL:hover {
-    background-color: #ff6565;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
-
-#checkIp {
-    background-color: #4CAF50;
-    color: white;
-}
-
-#checkIp:hover {
-    background-color: #45a049;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
-
-#checkHash {
-    background-color: #5ee0f4;
-    color: white;
-}
-
-#checkHash:hover {
-    background-color: #53c2d3;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-}
 
 #results {
     margin: 0 auto;
@@ -115,7 +78,7 @@ h2 {
 }
 
 .score-red {
-    color: #ff6347;
+    color: #D83B01;
 }
 
 .score-orange {
@@ -123,11 +86,11 @@ h2 {
 }
 
 .score-yellow {
-    color: #ffd700;
+    color: #FDB813;
 }
 
 .score-green {
-    color: #008000;
+    color: #107C10;
 }
 
 .progress-container {
@@ -210,17 +173,25 @@ ul {
     display: block;
 }
 
-.toggle-button {
-    background-color: #007BFF;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    margin: 5px 0;
+
+
+
+#settings {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
-    font-size: 14px;
-    border-radius: 4px;
 }
 
-.toggle-button:hover {
-    background-color: #0056b3;
-}
+senti-button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
+  
+  

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Template Creator</title>
+  <link rel="stylesheet" type="text/css" href="../styles.css">
+  <link rel="stylesheet" type="text/css" href="template-creator.css">
+</head>
+<body>
+  <div class="container">
+    <div>
+      <div class="autocomplete">
+        <input type="text" id="templateSearch" placeholder="Search for a template">
+      </div>
+      <senti-button id="loadTemplateBtn" color="#0078D4" text-color="#FFFFFF" text="load template"></senti-button>
+    </div>
+    <div>
+      <senti-button id="defaultTemplateBtn" color="#0078D4" text-color="#FFFFFF" text="default template"></senti-button>
+      <senti-button id="insertVariableBtn" color="#0078D4" text-color="#FFFFFF" text="insert variable"></senti-button>
+      <senti-button id="insertQueryBtn" color="#0078D4" text-color="#FFFFFF" text="insert query"></senti-button>
+    </div>
+    <textarea id="templateContent" rows="20" cols="100"></textarea>
+    <senti-button id="saveTemplateBtn" color="#0078D4" text-color="#FFFFFF" text="save template"></senti-button>
+  </div>
+
+  <script src="template-creator.js"></script>
+  <script src="../../components/senti-button.js"></script>
+</body>
+</html>

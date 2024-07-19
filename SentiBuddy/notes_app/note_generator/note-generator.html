@@ -1,13 +1,11 @@
 <html>
 <head>
-  <title>Note Generator</title>
   <link rel="stylesheet" type="text/css" href="../styles.css">
   <link rel="stylesheet" type="text/css" href="note-generator.css">
 </head>
 <body>
   <div class="container">
-    <h1>Note Generator</h1>
-    <div class="input-group">
+      <div class="input-group">
       <label for="incidentNumber">Incident Number:</label>
       <input type="text" id="incidentNumber" required>
     </div>
@@ -20,7 +18,8 @@
         <label for="templateSearch">Search for a template:</label>
         <input type="text" id="templateSearch">
       </div>
-      <button id="loadButton">Load Template</button>
+      <senti-button id="loadButton" color="#0078D4" text-color="#FFFFFF" text="Load templates"></senti-button>
+      <div id="timerDisplay" style="margin-top: 10px;">Timer: 00:00</div>
     </div>
     <div class="template-info">
       <div id="templateInfo"></div>
@@ -35,14 +34,14 @@
       <textarea id="kqlQueries" readonly></textarea>
     </div>
     <div class="button-group">
-      <button id="updateQueryButton">Update Query</button>
-      <button id="populateButton">Populate Template</button>
+      <senti-button id="updateQueryButton" color="#0078D4" text-color="#FFFFFF" text="Update Query"></senti-button>
+      <senti-button id="populateButton" color="#0078D4" text-color="#FFFFFF" text="Populate Template"></senti-button>
     </div>
     <div id="savePopup" class="popup">
       <div class="popup-content">
         <span class="close-button">&times;</span>
         <textarea id="populatedTemplate"></textarea>
-        <button id="saveButton">Save Note</button>
+        <senti-button id="saveButton" color="#0078D4" text-color="#FFFFFF" text="Save Note"></senti-button>
       </div>
     </div>
     <div id="formattedPopup" class="popup">
@@ -53,7 +52,8 @@
     </div>
   </div>
   <script src="note-generator.js"></script>
-  <script src="timer.js"></script>
+  <script src="../timer.js"></script>
   <script src="client.js"></script>
+  <script src="../../components/senti-button.js"></script>
 </body>
 </html>

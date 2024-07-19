@@ -1,78 +1,103 @@
 {
-    "name": "Senti Buddy",
-    "version": "2.4.1",
-    "description": "Browser Extension to enable Filtering & Desktop Notifications for Sentinel — Toggle with ALT+A . ALT+C to access config.",
-    "author": {
-        "email": "cringlebox@gmail.com"
-    },
-    "options_ui": {
-      "page": "options.html",
-      "open_in_tab": false
-    },
-    "manifest_version": 3,
-    "permissions": [
-      "activeTab",
-      "notifications",
-      "tabs",
-      "clipboardRead",
-      "storage",
-      "favicon"
-    ],
-    "action": {
-      "default_popup": "popup.html"
-     },
-    "commands": {
-      "toggle": {
-        "description": "Activate extension",
-        "suggested_key": {
-          "default": "Alt+A",
-          "mac": "Command+Shift+A"
-        }
+  "name": "Senti Buddy",
+  "version": "2.4.1",
+  "description": "Browser Extension to enable Filtering & Desktop Notifications for Sentinel — Toggle with ALT+A . ALT+C to access config.",
+  "author": {
+    "email": "cringlebox@gmail.com"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "manifest_version": 3,
+  "permissions": [
+    "commands",
+    "activeTab",
+    "notifications",
+    "tabs",
+    "clipboardRead",
+    "storage",
+    "favicon"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "chrome_style": false
+  },
+  "commands": {
+    "open-config": {
+      "suggested_key": {
+        "default": "Alt+C",
+        "mac": "Command+Shift+C"
       },
-      "search-ip": {
-        "description": "Search an IP",
-        "suggested_key": {
-          "default": "Alt+P",
-          "mac": "Command+Shift+P"
-        }
-      },
-      "search-hash": {
-        "description": "Search Hash",
-        "suggested_key": {
-          "default": "Alt+H",
-          "mac": "Command+Shift+H"
-        }
-      },
-      "view-config": {
-        "description": "Modify Configurations",
-        "suggested_key": {
-          "default": "Alt+C",
-          "mac": "Command+Shift+C"
-        }
-      }
+      "description": "Modify Configurations"
     },
-    "content_scripts": [
-      {
-        "matches": ["https://portal.azure.com/*", "https://api.abuseipdb.com/*", "https://www.virustotal.com/*", "https://api11.scamalytics.com/*"],
-        "css": ["css/core.css"],
-        "js": ["core.js"],
-        "run_at": "document_end",
-        "all_frames": true
-      }
-    ],
-    "background": {
-      "service_worker": "service_worker.js"
+    "toggle-queue-filtering": {
+      "suggested_key": {
+        "default": "Alt+A",
+        "mac": "Command+Shift+A"
+      },
+      "description": "Toggle Queue Filtering"
     },
-    "web_accessible_resources": [
-        {
-          "resources": ["_favicon/*", "options.html", "popup.html", "note_gen/*"],
-          "matches": ["https://portal.azure.com/*","https://api.abuseipdb.com/*", "https://www.virustotal.com/*", "https://api11.scamalytics.com/*"],
-          "extension_ids": ["*"]
-        }
-      ],
-    "icons": {
-      "16": "icon.png",
-      "38": "icon.png",
-      "48": "icon.png"
+    "search-ip": {
+      "suggested_key": {
+        "default": "Alt+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Search an IP"
+    },
+    "search-hash": {
+      "suggested_key": {
+        "default": "Alt+H",
+        "mac": "Command+Shift+H"
+      },
+      "description": "Search Hash"
     }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "scripts/options-script.js", "scripts/timer-script.js", "core/core.js", "notes_app/timer.js"
+      ],
+      "css":[
+        "core/core.css"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "background": {
+    "service_worker": "service_worker.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "_favicon/*",
+        "options.html",
+        "popup.html",
+        "notes_app/*",
+        "notes_app/*.html",
+        "notes_app/*.js",
+        "notes_app/*.css",
+        "notes_app/**/*.html",
+        "notes_app/**/*.js",
+        "notes_app/**/*.css"
+      ],
+      "matches": [
+        "https://portal.azure.com/*",
+        "https://api.abuseipdb.com/*",
+        "https://www.virustotal.com/*",
+        "https://api11.scamalytics.com/*"
+      ],
+      "extension_ids": [
+        "*"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "38": "icon.png",
+    "48": "icon.png"
   }
+}
