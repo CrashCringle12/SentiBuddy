@@ -1,12 +1,36 @@
+let startTime;
+let timerInterval;
+let elapsedTime;
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  const endTime = Date.now();
+  elapsedTime = (endTime - startTime) / 1000; // Convert to seconds
+  // saveTimerData(elapsedTime);
+}
+
+function updateTimer() {
+  const currentTime = Date.now();
+  const elapsedTime = (currentTime - startTime) / 1000; // Convert to seconds
+  console.log(`Elapsed time: ${elapsedTime} seconds`);
+}
+
+
 // Get references to the DOM elements
 const incidentNumberInput = document.getElementById('incidentNumber');
 const templateSearchInput = document.getElementById('templateSearch');
 const loadButton = document.getElementById('loadButton');
 const templateContentTextarea = document.getElementById('templateContent');
 const populateButton = document.getElementById('populateButton');
+const populateLastAlertButton = document.getElementById('populateLastAlertButton');
 const updateQueryButton = document.getElementById('updateQueryButton');
 const kqlQueriesTextarea = document.getElementById('kqlQueries');
 const saveButton = document.getElementById('saveButton');
+const saveAsTemplateButton = document.getElementById('saveAsTemplateButton');
 
 let templateFiles = [];
 
@@ -273,19 +297,43 @@ function applyHtmlFormatting(content) {
 }
 
 // Function to save the populated template to Chrome storage
-function saveNote() {
+function saveNote(asTemplate) {
     const incidentNumber = incidentNumberInput.value;
     const populatedTemplate = document.getElementById('populatedTemplate').value;
-
+    const clientDropdown = document.getElementById('clientDropdown');
+    const client = clientDropdown.value;
+    const projectCode = clientDropdown.options[clientDropdown.selectedIndex].dataset.projectCode;
+    const timerData = `${incidentNumber},${client},${projectCode},${elapsedTime}`;
+    console.log('Timer data being sent:', timerData); // Add this line
+    const name = client +"-"+ incidentNumber
     chrome.storage.local.get(['templates'], function(result) {
         let templates = result.templates || [];
 
         // Update the existing template or add a new one
-        const templateIndex = templates.findIndex(t => t.name === incidentNumber);
+        const templateIndex = templates.findIndex(t => t.name === name);
         if (templateIndex > -1) {
             templates[templateIndex].content = populatedTemplate;
         } else {
-            templates.push({ name: incidentNumber, content: populatedTemplate });
+            templates.push({ 
+                name: name,
+                template: templateSearchInput.value,
+                client: client,
+                isTemplate: false,
+                number: incidentNumber, 
+                content: populatedTemplate,
+                timeSpent: timerData
+            });
+            if (asTemplate) {
+                templates.push({ 
+                    name: "[TEMPLATE] " + name,
+                    template: templateSearchInput.value,
+                    client: "TEMPLATE",
+                    number: null,
+                    isTemplate: true,
+                    content: populatedTemplate,
+                    timeSpent: null
+                });
+            }
         }
 
         chrome.storage.local.set({ templates: templates }, function() {
@@ -428,12 +476,33 @@ function autocomplete(input, options) {
     });
 }
 
+populateLastAlertButton.addEventListener('click', async () => {
+    try {
+        chrome.runtime.sendMessage({ hash: "", type: "getLastAlert" }, function(response) {
+            console.log("Response Received")
+            console.log(response)
+        });
+    } catch (error) {
+        console.log('Failed to access clipboard.');
+    }
+});
+
 window.addEventListener('DOMContentLoaded', fetchClients);
 // Event listeners
-loadButton.addEventListener('click', loadTemplateFile);
+loadButton.addEventListener('click', function() {
+    loadTemplateFile();
+    startTimer();
+  });
 populateButton.addEventListener('click', populateTemplate);
 updateQueryButton.addEventListener('click', updateQuery);
-saveButton.addEventListener('click', saveNote);
+saveButton.addEventListener('click', function() {
+    stopTimer();
+    saveNote(false);
+  });
 
+saveAsTemplateButton.addEventListener('click', function() {
+    stopTimer();
+    saveNote(true);
+});
 // Fetch template files on page load
 fetchTemplateFiles();

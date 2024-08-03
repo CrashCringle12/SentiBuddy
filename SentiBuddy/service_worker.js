@@ -1,6 +1,6 @@
 const notificationTab = {};
 let queueActive = false;
-
+let lastAlertData = {};
 const maxAgeInDays = 90;
 const verbose = true;  // This is a flag, typically set to get detailed responses
 // Set the API key
@@ -164,7 +164,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         });
     }
     sendResponse({ active: queueActive });
-  }else {
+  } else if (request.type === "getLastAlert") {
+    sendResponse({data: lastAlertData})
+  } else {
     console.log(request.type)
   }
 });
@@ -190,6 +192,8 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
       message: 'INC: ' + request.info.incID + ' - ' + request.info.title,
       iconUrl: faviconURL(sender.tab.url),
     });
+  } else if (request.type == 'updateLastAlert') {
+    lastAlertData = request.info
   }
 });
 

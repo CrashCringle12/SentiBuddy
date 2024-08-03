@@ -86,6 +86,15 @@ function saveTemplate() {
                 templates[templateIndex].content = content;
             } else {
                 templates.push({ name: fileName, content: content });
+                templates.push({ 
+                    name: fileName,
+                    isTemplate: true,
+                    template: fileName,
+                    client: "TEMPLATE",
+                    number: null, 
+                    content: populatedTemplate,
+                    timeSpent: null
+                });
             }
             chrome.storage.local.set({ templates: templates }, function() {
                 alert('Template saved successfully!');
