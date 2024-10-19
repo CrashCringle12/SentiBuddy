@@ -13,9 +13,9 @@ root.style.color = "white";
 root.style.cursor = "pointer";
 document.body.appendChild(root);
 
-let startTime;
+let startTiming;
 let elapsedTime = 0;
-let timerInterval;
+let timingInterval;
 let isRunning = false;
 
 function updateDisplay() {
@@ -28,9 +28,9 @@ function updateDisplay() {
 
 function startTimer() {
   if (!isRunning) {
-    startTime = Date.now() - elapsedTime;
-    timerInterval = setInterval(() => {
-      elapsedTime = Date.now() - startTime;
+    startTiming = Date.now() - elapsedTime;
+    timingInterval = setInterval(() => {
+      elapsedTime = Date.now() - startTiming;
       updateDisplay();
     }, 1000);
     isRunning = true;
@@ -40,7 +40,7 @@ function startTimer() {
 
 function stopTimer() {
   if (isRunning) {
-    clearInterval(timerInterval);
+    clearTimer();
     isRunning = false;
     root.style.backgroundColor = "red";
   }

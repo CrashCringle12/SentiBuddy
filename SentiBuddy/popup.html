@@ -1,29 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>OSINT</title>
     <link rel="stylesheet" href="css/popup.css">
+    <link rel="stylesheet" href="note_gen/note-generator.css">
 </head>
+
 <body>
     <div id="popup-content">
-
-    <senti-button id="settings" color="grey" text-color="#FFFFFF" icon="\2699"></senti-button>
-    <senti-button id="notificationToggle" color="#D83B01" text-color="#FFFFFF"  text="Notifications: Off"></senti-button> 
-    <senti-button id="startQueueFiltering" color="#D83B01" text-color="#FFFFFF"  text="Queue Filter: Off"></senti-button>
-    <senti-button id="openNoteTaking" color="#0078D4" text-color="#FFFFFF" text="Note Taking"></senti-button>
-    <senti-button id="checkIp" color="#0078D4" text-color="#FFFFFF"  text="Check IP"></senti-button>
-    <senti-button id="checkHash" color="#0078D4" text-color="#FFFFFF"  text="Check Hash"></senti-button>
-    <senti-button id="defangURL" color="#0078D4" text-color="#FFFFFF"  text="Defang URL"></senti-button>
-    
-    
- 
-    <div id="results"></div>
-</div>
-
-
+        <senti-button id="settings" color="grey" text-color="#FFFFFF" icon="\2699"></senti-button>
+        <senti-button id="notificationToggle" color="#D83B01" text-color="#FFFFFF"
+            text="Notifications: Off"></senti-button>
+        <senti-button id="startQueueFiltering" color="#D83B01" text-color="#FFFFFF"
+            text="Queue Filter: Off"></senti-button>
+        <senti-button id="openNoteTaking" color="#0078D4" text-color="#FFFFFF" text="Note Taking"></senti-button>
+        <senti-button id="checkIp" color="#0078D4" text-color="#FFFFFF" text="Check IP"></senti-button>
+        <senti-button id="checkHash" color="#0078D4" text-color="#FFFFFF" text="Check Hash"></senti-button>
+        <senti-button id="defangURL" color="#0078D4" text-color="#FFFFFF" text="Defang URL"></senti-button>
+        <div id="results"></div>
+    </div>
     <script src="popup.js"></script>
     <script src="components/senti-button.js"></script>
-    <script src="scripts/button-script.js"></script>
 </body>
+
 </html>

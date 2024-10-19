@@ -4,6 +4,7 @@ const templateSearchInput = document.getElementById('templateSearch');
 const loadButton = document.getElementById('loadButton');
 const templateContentTextarea = document.getElementById('templateContent');
 const populateButton = document.getElementById('populateButton');
+const populateLastAlertButton = document.getElementById('populateLastAlertButton');
 const updateQueryButton = document.getElementById('updateQueryButton');
 const kqlQueriesTextarea = document.getElementById('kqlQueries');
 const saveButton = document.getElementById('saveButton');
@@ -280,16 +281,30 @@ function applyHtmlFormatting(content) {
 function saveNote() {
     const incidentNumber = incidentNumberInput.value;
     const populatedTemplate = document.getElementById('populatedTemplate').value;
+    const clientDropdown = document.getElementById('clientDropdown');
+    const client = clientDropdown.value;
+    const projectCode = clientDropdown.options[clientDropdown.selectedIndex].dataset.projectCode;
+    const timerData =   timerDisplay = document.getElementById('timerDisplay').value;
+    console.log('Timer data being sent:', timerData); // Add this line
+    const name = client +"-"+ incidentNumber
 
     chrome.storage.local.get(['templates'], function(result) {
         let templates = result.templates || [];
 
         // Update the existing template or add a new one
-        const templateIndex = templates.findIndex(t => t.name === incidentNumber);
+        const templateIndex = templates.findIndex(t => t.name === name);
         if (templateIndex > -1) {
             templates[templateIndex].content = populatedTemplate;
         } else {
-            templates.push({ name: incidentNumber, content: populatedTemplate });
+            templates.push({ 
+                name: name,
+                template: templateSearchInput.value,
+                client: client,
+                isTemplate: false,
+                number: incidentNumber, 
+                content: populatedTemplate,
+                timeSpent: timerData
+            });
         }
 
         chrome.storage.local.set({ templates: templates }, function() {
@@ -438,6 +453,16 @@ loadButton.addEventListener('click', loadTemplateFile);
 populateButton.addEventListener('click', populateTemplate);
 updateQueryButton.addEventListener('click', updateQuery);
 saveButton.addEventListener('click', saveNote);
+populateLastAlertButton.addEventListener('click', async () => {
+    try {
+        chrome.runtime.sendMessage({ hash: "", type: "getLastAlert" }, function(response) {
+            console.log("Response Received")
+            console.log(response)
+        });
+    } catch (error) {
+        console.log('Failed to access clipboard.');
+    }
+});
 // Fetch template files on page load
 fetchTemplateFiles();
 

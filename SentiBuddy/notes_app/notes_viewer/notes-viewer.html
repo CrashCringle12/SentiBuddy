@@ -1,0 +1,61 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="../styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        #notesContainer {
+            display: flex;
+            height: 90%;
+            border-top: 1px solid #ccc;
+        }
+
+        #notesList {
+            width: 30%;
+            border-right: 1px solid #ccc;
+            overflow-y: scroll;
+            padding: 10px;
+        }
+
+        #noteDetails {
+            width: 70%;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .note-item {
+            padding: 5px;
+            border-bottom: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .note-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="notesContainer">
+        <div id="notesList">
+            <!-- List of notes will be populated here -->
+        </div>
+        <div id="noteDetails">
+            <!-- Note details will be displayed here -->
+        </div>
+    </div>
+    <script src="notes-viewer.js"></script>
+    <script src="../../components/senti-button.js"></script>
+</body>
+</html>

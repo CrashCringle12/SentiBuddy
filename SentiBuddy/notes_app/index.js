@@ -8,6 +8,11 @@ document.getElementById('noteGeneratorBtn').addEventListener('click', (event) =>
   loadContent(chrome.runtime.getURL("notes_app/note_generator/note-generator.html"));
 });
 
+document.getElementById('notesViewerBtn').addEventListener('click', (event) => {
+  setActiveButton(event.target);
+  loadContent(chrome.runtime.getURL("notes_app/notes_viewer/notes-viewer.html"));
+});
+
 function setActiveButton(clickedButton) {
   // Remove 'active' state from all buttons
   document.querySelectorAll('senti-button').forEach(button => {
@@ -31,10 +36,12 @@ window.addEventListener('load', function() {
   }, '*');
 });
 
-// // Set initial active state for the first button (optional)
-// window.addEventListener('DOMContentLoaded', (event) => {
-//   const firstButton = document.querySelector('senti-button');
-//   if (firstButton) {
-//     setActiveButton(firstButton);
-//   }
-// });
+// Set initial active state for the first button (optional)
+window.addEventListener('DOMContentLoaded', (event) => {
+  const firstButton = document.getElementById('noteGeneratorBtn');
+  if (firstButton) {
+    setActiveButton(firstButton);
+  }
+  loadContent(chrome.runtime.getURL("notes_app/notes_viewer/notes-viewer.html"));
+
+});
