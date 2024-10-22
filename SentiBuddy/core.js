@@ -162,7 +162,6 @@ var defaultQueue = function () {
   if (observer) {
     observer.disconnect();
     DOMObserver.disconnect();
-
     targetElem.classList.remove(ELEMENT_CHANGED_CLASSNAME);
   }
 
@@ -372,6 +371,10 @@ chrome.runtime.onMessage.addListener(function (request) {
       observer.disconnect();
       DOMObserver.disconnect();
       targetElem.classList.remove(ELEMENT_CHANGED_CLASSNAME);
+      chrome.runtime.sendMessage({
+        type: 'set-queue-state',
+        active: false
+      })
     }
     if (enabled) {
       removeListeners();
@@ -477,6 +480,10 @@ chrome.runtime.onMessage.addListener(function (request) {
         // Disconnect the observer temporarily so we can set the class name
         // to avoid triggering and endless loop.
         targetElem.classList.add(ELEMENT_CHANGED_CLASSNAME);
+        chrome.runtime.sendMessage({
+          type: 'set-queue-state',
+          active: true
+        })
         if (initializing) {
           console.log("Finished Initializing")
           initializing = false
@@ -487,10 +494,6 @@ chrome.runtime.onMessage.addListener(function (request) {
       }
     }
     enabled = !enabled;
-  } else if (request.type === 'start-queue-filtering') {
-    console.log("STARTING")
-    // Call your function to start queue filtering
-    defaultQueue();  // Assuming this is the function that starts the queue filtering
   }
 });
 

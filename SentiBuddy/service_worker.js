@@ -159,6 +159,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'get-queue-state':
       sendResponse({ active: queueActive });
       return true;
+    case 'set-queue-state':
+        queueActive = request.active
+        return true;
     case 'set-notifications':
       console.log('Handling set-notifications message');
     // Update the configuration in storage

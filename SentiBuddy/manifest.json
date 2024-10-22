@@ -1,6 +1,6 @@
 {
     "name": "Senti Buddy",
-    "version": "2.4.1",
+    "version": "3.0",
     "description": "Browser Extension to enable Filtering & Desktop Notifications for Sentinel — Toggle with ALT+A . ALT+C to access config.",
     "author": {
         "email": "cringlebox@gmail.com"
