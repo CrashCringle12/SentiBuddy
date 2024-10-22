@@ -96,7 +96,6 @@ function displayNoteDetails(noteName) {
     request.onsuccess = function (event) {
       const note = event.target.result;
       const noteDetailsContainer = document.getElementById('noteDetails');
-      console.log(note)
       if (note.isTemplate) {
         noteDetailsContainer.innerHTML = `
           <h2>${note.name}</h2>

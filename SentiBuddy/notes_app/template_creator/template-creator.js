@@ -25,7 +25,6 @@ function initializeDB() {
 
         request.onsuccess = function(event) {
             db = event.target.result;
-            console.log('Database initialized');
             resolve(db);
         };
 

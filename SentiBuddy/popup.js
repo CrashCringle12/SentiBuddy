@@ -171,7 +171,6 @@ startQueueButton.addEventListener('click', () => {
                 startQueueButton.setColor('#D83B01');
                 document.getElementById('results').textContent = 'Queue filtering stopped.';
             }
-            console.log("GGG")
         } else {
             document.getElementById('results').textContent = 'Failed to start queue filtering.';
         }
