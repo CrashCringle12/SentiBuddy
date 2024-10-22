@@ -40,15 +40,15 @@ function startTimer() {
 
 function stopTimer() {
   if (isRunning) {
-    clearTimer();
+    clearInterval(timingInterval)
     isRunning = false;
     root.style.backgroundColor = "red";
   }
 }
 
 function clearTimer() {
-  stopTimer();
   elapsedTime = 0;
+  stopTimer();
   updateDisplay();
 }
 

@@ -28,12 +28,31 @@ body {
     align-items: center;
     justify-content: center;
     color: #333;
+    background-color: #e0fffef1;
     background-color: #f4f4f4;
     border-radius: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
+#grouping {
+    max-width: 100%;
+    min-width: 300px;
+    margin-top: 20px;
+    /* min-height: 400px; */
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    background-color: #f4f4f4;
+    border-radius: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
 
 #results {
     margin: 0 auto;
@@ -111,7 +130,7 @@ h2 {
 }
 
 .progress-bar.score-red {
-    background-color: #ff6347;
+    background-color: #b9fbff;
 }
 
 .progress-bar.score-orange {
@@ -146,6 +165,7 @@ ul {
     justify-content: center;
 }
 
+
 .progress-circle {
     transition: stroke-dashoffset 0.6s ease;
     transform: rotate(-90deg);
@@ -173,13 +193,23 @@ ul {
     display: block;
 }
 
-
-
-
 #settings {
     position: absolute;
     top: 20px;
     right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+#openNoteTaking {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -194,4 +224,60 @@ senti-button {
     margin-bottom: 10px;
   }
   
-  
+  #toggle-group {
+    display: flex;
+    justify-content: space-between;
+    width: 100%; /* Adjust as needed */
+    margin-bottom: 10px;
+}
+
+.toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Spacing between label and switch */
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    border-radius: 50%;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+}
+
+input:checked + .slider {
+    background-color: #107C10;
+}
+
+input:checked + .slider:before {
+    transform: translateX(14px);
+}

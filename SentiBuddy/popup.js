@@ -29,31 +29,56 @@ const queueButton = document.querySelector('senti-button#startQueueFiltering');
 const defangUrlButton = document.querySelector('senti-button#defangURL');
 const ipCheckButton = document.querySelector('senti-button#checkIp');
 const hashCheckButton = document.querySelector('senti-button#checkHash');
-const notificationButton = document.querySelector('senti-button#notificationToggle');
 const settingsButton = document.querySelector('senti-button#settings')
-const startQueueButton = document.getElementById('startQueueFiltering');
 document.addEventListener('DOMContentLoaded', () => {
-
-    // Check the current state of the queue filtering
-    chrome.runtime.sendMessage({ type: 'get-queue-state' }, (response) => {
-        if (response.active) {
-            startQueueButton.setText('Queue Filtering: On');
-            startQueueButton.setColor('#107C10');
-        } else {
-            startQueueButton.setText('Queue Filtering: Off');
-            startQueueButton.setColor('#D83B01');
-        } 
-    });
-
-    chrome.storage.local.get(["desktopNotifications"]).then((result) => {
-        if (result.desktopNotifications) {
-            notificationButton.setText('Notifications: On');
-            notificationButton.setColor('#107C10');
-        } else {
-            notificationButton.setText('Notifications: Off');
-            notificationButton.setColor('#D83B01');
+    // Fetch the value of toggleExperiments from Chrome storage
+    chrome.storage.local.get('toggleExperiments', function(result) {
+        if (result.toggleExperiments) {
+            // If toggleExperiments is true, show the Note Taking button
+            document.getElementById('openNoteTaking').style.display = 'inline-block';
         }
     });
+    
+    const notificationToggle = document.getElementById('notificationToggle');
+    const queueFilterToggle = document.getElementById('startQueueFiltering');
+
+    // Initialize toggle states based on stored values
+    chrome.storage.local.get(['desktopNotifications'], function(result) {
+        notificationToggle.checked = result.desktopNotifications || false;
+        
+    });
+    chrome.runtime.sendMessage({ type: 'get-queue-state' }, (response) => {
+        queueFilterToggle.checked = response.active;
+    });
+   
+
+    // Event listener for Notifications toggle
+    notificationToggle.addEventListener('change', () => {
+        const isEnabled = notificationToggle.checked;
+        chrome.storage.local.set({ desktopNotifications: isEnabled }, () => {
+            console.log('Notifications toggled:', isEnabled);
+            chrome.runtime.sendMessage({ type: 'set-notifications', enabled: isEnabled });
+        });
+    });
+
+    // Event listener for Queue Filtering toggle
+    queueFilterToggle.addEventListener('change', () => {
+        const isEnabled = queueFilterToggle.checked;
+        setLoading();
+        chrome.runtime.sendMessage({ type: 'toggle-queue-filtering' }, function(response) {
+            if (response) {
+                if (response.active == true) {
+                    document.getElementById('results').textContent = 'Queue filtering started.';
+                } else {
+                    document.getElementById('results').textContent = 'Queue filtering stopped.';
+                }
+                console.log("GGG")
+            } else {
+                document.getElementById('results').textContent = 'Failed to start queue filtering.';
+            }
+        });
+    });
+
 
     // Add event listener for the new button
     notesButton.addEventListener('click', () => {
@@ -65,29 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-});
-
-notificationButton.addEventListener('click', () => {
-    chrome.storage.local.get(["desktopNotifications"]).then((result) => {
-        isNotifToggled = !result.desktopNotifications
-        if (isNotifToggled) {
-            notificationButton.setText('Notifications: On');
-            notificationButton.setColor('#107C10');
-            chrome.runtime.sendMessage({ type: 'set-notifications', enabled: true }, response => {
-                console.log('Notification enable response:', response);
-            });
-        } else {
-            notificationButton.setText('Notifications: Off');
-            notificationButton.setColor('#D83B01');
-            chrome.runtime.sendMessage({ type: 'set-notifications', enabled: false }, response => {
-                console.log('Notification disable response:', response);
-            });
-        }
-      });
-    // Update the configuration in storage
-    chrome.storage.local.set({ desktopNotifications: !isNotifToggled }, () => {
-    console.log('Notification settings updated');
-        });
 });
 
 settingsButton.addEventListener('click', async () => {
@@ -150,25 +152,6 @@ defangUrlButton.addEventListener('click', async () => {
     }
 });
 
-startQueueButton.addEventListener('click', () => {
-    setLoading();
-    chrome.runtime.sendMessage({ type: 'toggle-queue-filtering' }, function(response) {
-        if (response) {
-            if (response.active == true) {
-                startQueueButton.setText('Queue Filtering: On');
-                startQueueButton.setColor('#107C10');
-                document.getElementById('results').textContent = 'Queue filtering started.';
-            } else {
-                startQueueButton.setText('Queue Filtering: Off');
-                startQueueButton.setColor('#D83B01');
-                document.getElementById('results').textContent = 'Queue filtering stopped.';
-            }
-            console.log("GGG")
-        } else {
-            document.getElementById('results').textContent = 'Failed to start queue filtering.';
-        }
-    });
-});
 
 
 function getScoreClass(score) {

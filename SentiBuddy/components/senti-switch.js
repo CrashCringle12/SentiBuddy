@@ -1,4 +1,4 @@
-class SentiButton extends HTMLElement {
+class SentiSwitch extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -9,7 +9,7 @@ class SentiButton extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['color', 'text-color', 'text', 'active', 'icon', 'tooltip'];
+    return ['color', 'text-color', 'text', 'active', 'icon'];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -24,15 +24,12 @@ class SentiButton extends HTMLElement {
     const text = this.getAttribute('text') || '';
     const icon = this.getAttribute('icon') || '';
     const id = this.getAttribute('id') || '';
-    const tooltip = this.getAttribute('tooltip') || 'Tooltip text';
     const isActive = this.hasAttribute('active');
 
     this.shadowRoot.innerHTML = `
       <style>
         :host {
           display: inline-block;
-          position: relative; /* Ensures the tooltip is positioned relative to the button */
-
         }
         button {
           background-color: ${backgroundColor};
@@ -52,33 +49,23 @@ class SentiButton extends HTMLElement {
           justify-content: center;
           width: ${text ? 'auto' : '40px'};
           height: ${text ? 'auto' : '40px'};
-          min-width: ${text ? '200px' : '40px'};
+          min-width: ${text ? '100px' : '40px'};
           min-height: 40px;
         }
-        button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-          background-color: ${this.adjustColor(backgroundColor, 20)};
-        }
-        button:active, button[active] {
-          transform: translateY(1px);
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-          background-color: ${this.adjustColor(backgroundColor, -20)};
-        }
-     
+             
         .tooltiptext {
           visibility: hidden;
-          width: 150px;
-          background-color: #333;
+          width: 120px;
+          background-color: #555;
           color: #fff;
           text-align: center;
           border-radius: 6px;
-          padding: 100px;
+          padding: 5px 0;
           position: absolute;
           z-index: 1;
-          bottom: 125%; /* Adjust position relative to the button */
+          bottom: 125%;
           left: 50%;
-          transform: translateX(-50%);
+          margin-left: -60px;
           opacity: 0;
           transition: opacity 0.3s;
         }
@@ -88,15 +75,10 @@ class SentiButton extends HTMLElement {
           position: absolute;
           top: 100%;
           left: 50%;
-          transform: translateX(-50%);
+          margin-left: -5px;
           border-width: 5px;
           border-style: solid;
-          border-color: #333 transparent transparent transparent;
-        }
-
-        button:hover .tooltiptext {
-          visibility: visible;
-          opacity: 1;
+          border-color: #555 transparent transparent transparent;
         }
 
         .icon {
@@ -106,12 +88,84 @@ class SentiButton extends HTMLElement {
           align-items: center;
           justify-content: center;
         }
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 60px;
+          height: 34px;
+        }
+
+        .switch input { 
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #ccc;
+          -webkit-transition: .4s;
+          transition: .4s;
+        }
+
+        .slider:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          visibility: visible;
+          opacity: 1;
+          background-color: ${this.adjustColor(backgroundColor, 20)};
+        }
+        .slider:hover .tooltiptext {
+          visibility: visible;
+          opacity: 1;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 26px;
+          width: 26px;
+          left: 4px;
+          bottom: 4px;
+          background-color: white;
+          -webkit-transition: .4s;
+          transition: .4s;
+        }
+
+        input:checked + .slider {
+          background-color: #2196F3;
+        }
+
+        input:focus + .slider {
+          box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked + .slider:before {
+          -webkit-transform: translateX(26px);
+          -ms-transform: translateX(26px);
+          transform: translateX(26px);
+        }
+
+        /* Rounded sliders */
+        .slider.round {
+          border-radius: 34px;
+        }
+
+        .slider.round:before {
+          border-radius: 50%;
+        }
       </style>
-      <button id="${id}" ${isActive ? 'active' : ''}>
-        ${icon ? `<span class="icon">${this.decodeIcon(icon)}</span>` : ''}
+      <label class="switch">
         ${text}
-      <span class="tooltiptext">${tooltip}</span>
-      </button>
+        <input type="checkbox" id="${id}">
+        <span class="slider round"></span>
+        <span class="tooltiptext">Tooltip text</span>
+      </label>
     `;
   }
 
@@ -168,4 +222,4 @@ class SentiButton extends HTMLElement {
   }
 }
 
-customElements.define('senti-button', SentiButton);
+customElements.define('senti-switch', SentiSwitch);

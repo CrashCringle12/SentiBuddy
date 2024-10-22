@@ -11,6 +11,38 @@ const saveButton = document.getElementById('saveButton');
 
 let templateFiles = [];
 
+let db;
+
+// Function to initialize the database
+function initializeDB() {
+  return new Promise((resolve, reject) => {
+    if (db) {
+      return resolve(db); // If db is already initialized, return it
+    }
+
+    const request = indexedDB.open('TemplatesDB', 1);
+
+    request.onerror = function (event) {
+      console.error('Error opening IndexedDB:', event.target.errorCode);
+      reject(event.target.errorCode);
+    };
+
+    request.onsuccess = function (event) {
+      db = event.target.result;
+      console.log('Database initialized');
+      resolve(db);
+    };
+
+    request.onupgradeneeded = function (event) {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('templates')) {
+        const objectStore = db.createObjectStore('templates', { keyPath: 'name' });
+        objectStore.createIndex('name', 'name', { unique: true });
+      }
+    };
+  });
+}
+
 // Function to fetch clients from chrome.storage.local
 function fetchClients() {
     console.log('Fetching clients...');
@@ -23,42 +55,89 @@ function fetchClients() {
             const option = document.createElement('option');
             option.value = client.name;
             option.textContent = client.name;
-            option.dataset.projectCode = client.projectCode;
             clientDropdown.appendChild(option);
         });
     });
 }
 
-// Function to fetch the list of template files from Chrome storage
+// // Function to fetch the list of template files from Chrome storage
+// function fetchTemplateFiles() {
+//     chrome.storage.local.get('templates', function(data) {
+//         if (data.templates) {
+//             templateFiles = data.templates.map(template => template.name);
+//             autocomplete(templateSearchInput, templateFiles);
+//         }
+//     });
+// }
+
+// // Function to load the selected template from Chrome storage
+// function loadTemplateFile() {
+//     const selectedTemplateName = templateSearchInput.value;
+//     chrome.storage.local.get('templates', function(data) {
+//         if (data.templates) {
+//             const template = data.templates.find(t => t.name === selectedTemplateName);
+//             if (template) {
+//                 const { variables, info, kqlQueries, contentWithoutKql } = extractVariables(template.content);
+//                 templateContentTextarea.value = contentWithoutKql;
+//                 document.getElementById('templateInfo').textContent = info;
+//                 generateVariableForm(variables);
+//                 kqlQueriesTextarea.value = kqlQueries.join('\n\n```\n```\n\n');
+//             } else {
+//                 console.error('Template not found');
+//             }
+//         } else {
+//             console.error('No templates found in storage');
+//         }
+//     });
+// }
+
+// Function to fetch the list of template files from IndexedDB
 function fetchTemplateFiles() {
-    chrome.storage.local.get('templates', function(data) {
-        if (data.templates) {
-            templateFiles = data.templates.map(template => template.name);
-            autocomplete(templateSearchInput, templateFiles);
+    const transaction = db.transaction(['templates'], 'readonly');
+    const noteStore = transaction.objectStore('templates');
+    const request = noteStore.getAll();
+
+    request.onsuccess = function(event) {
+        const notes = event.target.result;
+        if (notes.length) {
+            templateFiles = notes.map(note => note.name);
+            autocomplete(templateSearchInput, templateFiles);  // Assuming you have an autocomplete function for the input
+        } else {
+            console.error('No templates found in IndexedDB');
         }
-    });
+    };
+
+    request.onerror = function(event) {
+        console.error('Error fetching templates:', event.target.errorCode);
+    };
 }
 
-// Function to load the selected template from Chrome storage
+// Function to load the selected template from IndexedDB
 function loadTemplateFile() {
     const selectedTemplateName = templateSearchInput.value;
-    chrome.storage.local.get('templates', function(data) {
-        if (data.templates) {
-            const template = data.templates.find(t => t.name === selectedTemplateName);
-            if (template) {
-                const { variables, info, kqlQueries, contentWithoutKql } = extractVariables(template.content);
-                templateContentTextarea.value = contentWithoutKql;
-                document.getElementById('templateInfo').textContent = info;
-                generateVariableForm(variables);
-                kqlQueriesTextarea.value = kqlQueries.join('\n\n```\n```\n\n');
-            } else {
-                console.error('Template not found');
-            }
+
+    const transaction = db.transaction(['templates'], 'readonly');
+    const noteStore = transaction.objectStore('templates');
+    const request = noteStore.index('name').get(selectedTemplateName);
+
+    request.onsuccess = function(event) {
+        const template = event.target.result;
+        if (template) {
+            const { variables, info, kqlQueries, contentWithoutKql } = extractVariables(template.content);
+            templateContentTextarea.value = contentWithoutKql;
+            document.getElementById('templateInfo').textContent = info;
+            generateVariableForm(variables);  // Assuming you have a function that generates forms for variables
+            kqlQueriesTextarea.value = kqlQueries.join('\n\n```\n```\n\n');
         } else {
-            console.error('No templates found in storage');
+            console.error('Template not found in IndexedDB');
         }
-    });
+    };
+
+    request.onerror = function(event) {
+        console.error('Error loading template:', event.target.errorCode);
+    };
 }
+
 
 
 // Function to extract variables, information, and KQL queries from the template content
@@ -277,42 +356,52 @@ function applyHtmlFormatting(content) {
     return formattedContent;
 }
 
-// Function to save the populated template to Chrome storage
 function saveNote() {
     const incidentNumber = incidentNumberInput.value;
     const populatedTemplate = document.getElementById('populatedTemplate').value;
     const clientDropdown = document.getElementById('clientDropdown');
     const client = clientDropdown.value;
-    const projectCode = clientDropdown.options[clientDropdown.selectedIndex].dataset.projectCode;
-    const timerData =   timerDisplay = document.getElementById('timerDisplay').value;
-    console.log('Timer data being sent:', timerData); // Add this line
-    const name = client +"-"+ incidentNumber
+    const timerData = document.getElementById('timerDisplay').textContent; // Fetch timer data
+    console.log('Timer data being sent:', timerData); 
 
-    chrome.storage.local.get(['templates'], function(result) {
-        let templates = result.templates || [];
+    const name = client + "-" + incidentNumber;  // Construct the name key
 
-        // Update the existing template or add a new one
-        const templateIndex = templates.findIndex(t => t.name === name);
-        if (templateIndex > -1) {
-            templates[templateIndex].content = populatedTemplate;
+    const transaction = db.transaction(['templates'], 'readwrite');
+    const noteStore = transaction.objectStore('templates');
+
+    // First, check if a note with the same name exists
+    const checkRequest = noteStore.index('name').get(name);
+
+    checkRequest.onsuccess = function(event) {
+        let note = event.target.result;
+
+        if (note) {
+            // If a note with the same name exists, update its content
+            note.content = populatedTemplate;
+            note.timeSpent = timerData;
         } else {
-            templates.push({ 
+            // If the note doesn't exist, create a new one
+            note = {
                 name: name,
                 template: templateSearchInput.value,
                 client: client,
                 isTemplate: false,
-                number: incidentNumber, 
+                number: incidentNumber,
                 content: populatedTemplate,
                 timeSpent: timerData
-            });
+            };
         }
 
-        chrome.storage.local.set({ templates: templates }, function() {
+        // Save the new or updated note in IndexedDB
+        const saveRequest = noteStore.put(note);
+
+        saveRequest.onsuccess = function() {
             alert('Template saved successfully.');
             clearFields();
             const savePopup = document.getElementById('savePopup');
             savePopup.style.display = 'none';
 
+            // Display formatted note
             const formattedTemplate = applyHtmlFormatting(populatedTemplate);
             const formattedPopup = document.getElementById('formattedPopup');
             const formattedTemplateDiv = document.getElementById('formattedTemplate');
@@ -337,9 +426,80 @@ function saveNote() {
             closeButton.addEventListener('click', function() {
                 formattedPopup.style.display = 'none';
             });
-        });
-    });
+        };
+
+        saveRequest.onerror = function(event) {
+            console.error('Error saving the note:', event.target.errorCode);
+        };
+    };
+
+    checkRequest.onerror = function(event) {
+        console.error('Error checking existing note:', event.target.errorCode);
+    };
 }
+
+// // Function to save the populated template to Chrome storage
+// function saveNote() {
+//     const incidentNumber = incidentNumberInput.value;
+//     const populatedTemplate = document.getElementById('populatedTemplate').value;
+//     const clientDropdown = document.getElementById('clientDropdown');
+//     const client = clientDropdown.value;
+//     const timerData =   timerDisplay = document.getElementById('timerDisplay').value;
+//     console.log('Timer data being sent:', timerData); // Add this line
+//     const name = client +"-"+ incidentNumber
+
+//     chrome.storage.local.get(['templates'], function(result) {
+//         let templates = result.templates || [];
+
+//         // Update the existing template or add a new one
+//         const templateIndex = templates.findIndex(t => t.name === name);
+//         if (templateIndex > -1) {
+//             templates[templateIndex].content = populatedTemplate;
+//         } else {
+//             templates.push({ 
+//                 name: name,
+//                 template: templateSearchInput.value,
+//                 client: client,
+//                 isTemplate: false,
+//                 number: incidentNumber, 
+//                 content: populatedTemplate,
+//                 timeSpent: timerData
+//             });
+//         }
+
+//         chrome.storage.local.set({ templates: templates }, function() {
+//             alert('Template saved successfully.');
+//             clearFields();
+//             const savePopup = document.getElementById('savePopup');
+//             savePopup.style.display = 'none';
+
+//             const formattedTemplate = applyHtmlFormatting(populatedTemplate);
+//             const formattedPopup = document.getElementById('formattedPopup');
+//             const formattedTemplateDiv = document.getElementById('formattedTemplate');
+//             formattedTemplateDiv.innerHTML = formattedTemplate;
+//             formattedPopup.style.display = 'block';
+
+//             const copyHtmlButton = document.createElement('button');
+//             copyHtmlButton.textContent = 'Copy as HTML';
+//             copyHtmlButton.addEventListener('click', function() {
+//                 copyToClipboard(formattedTemplate);
+//             });
+//             formattedTemplateDiv.appendChild(copyHtmlButton);
+
+//             const copyPlaintextButton = document.createElement('button');
+//             copyPlaintextButton.textContent = 'Copy as Template';
+//             copyPlaintextButton.addEventListener('click', function() {
+//                 copyToClipboard(populatedTemplate);
+//             });
+//             formattedTemplateDiv.appendChild(copyPlaintextButton);
+
+//             const closeButton = formattedPopup.querySelector('.close-button');
+//             closeButton.addEventListener('click', function() {
+//                 formattedPopup.style.display = 'none';
+//             });
+//         });
+//     });
+// }
 
 function copyToClipboard(text) {
     const tempContainer = document.createElement('div');
@@ -455,15 +615,27 @@ updateQueryButton.addEventListener('click', updateQuery);
 saveButton.addEventListener('click', saveNote);
 populateLastAlertButton.addEventListener('click', async () => {
     try {
-        chrome.runtime.sendMessage({ hash: "", type: "getLastAlert" }, function(response) {
+        chrome.runtime.sendMessage({ hash: "", type: "lastAlertData" }, function(response) {
             console.log("Response Received")
             console.log(response)
+            incidentNumberInput.value = response.incNumber;
+            templateSearchInput.value = response.incTitle;
+            document.getElementById('templateInfo').textContent = 
+            `Incident - ${response.workspace} - ${response.incNumber}
+             Severity: ${response.severity}
+             Status: ${response.status}
+             Description: ${response.description}`;
+            document.getElementById('variableForm').innerHTML = '';
+            kqlQueriesTextarea.value = '';
+            document.getElementById('populatedTemplate').value = '';
         });
     } catch (error) {
         console.log('Failed to access clipboard.');
     }
 });
-// Fetch template files on page load
-fetchTemplateFiles();
+
+initializeDB().then(() => {
+    fetchTemplateFiles();
+});
 
 

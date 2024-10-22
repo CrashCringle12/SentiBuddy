@@ -8,41 +8,134 @@ const templateContent = document.getElementById('templateContent');
 const saveTemplateBtn = document.getElementById('saveTemplateBtn');
 
 let templateFiles = [];
+let db;
 
-// Function to fetch the list of template files
-function fetchTemplateFiles() {
-    chrome.storage.local.get('templates', function(data) {
-        if (data.templates) {
-            templateFiles = data.templates.map(template => template.name);
-            autocomplete(templateSearch, templateFiles);
-        } else {
-            console.error('No templates found in storage');
+function initializeDB() {
+    return new Promise((resolve, reject) => {
+        if (db) {
+            return resolve(db); // If db is already initialized, return it
         }
+
+        const request = indexedDB.open('TemplatesDB', 1);
+
+        request.onerror = function(event) {
+            console.error('Error opening IndexedDB:', event.target.errorCode);
+            reject(event.target.errorCode);
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            console.log('Database initialized');
+            resolve(db);
+        };
+
+        request.onupgradeneeded = function(event) {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('templates')) {
+                const objectStore = db.createObjectStore('templates', { keyPath: 'name' });
+                objectStore.createIndex('name', 'name', { unique: true });
+            }
+        };
     });
 }
 
+// Function to fetch the list of template files
+// function fetchTemplateFiles() {
+//     chrome.storage.local.get('templates', function(data) {
+//         if (data.templates) {
+//             templateFiles = data.templates.map(template => template.name);
+//             autocomplete(templateSearch, templateFiles);
+//         } else {
+//             console.error('No templates found in storage');
+//         }
+//     });
+// }
+
+// Function to fetch the list of template files from IndexedDB
+function fetchTemplateFiles() {
+    const transaction = db.transaction(['templates'], 'readonly');
+    const templateStore = transaction.objectStore('templates');
+    const request = templateStore.getAll();
+
+    request.onsuccess = function(event) {
+        const templates = event.target.result;
+        if (templates.length) {
+            templateFiles = templates.map(template => template.name);
+            autocomplete(templateSearch, templateFiles);  // Assuming `autocomplete` is a function for input
+        } else {
+            console.error('No templates found in IndexedDB');
+        }
+    };
+
+    request.onerror = function(event) {
+        console.error('Error fetching templates:', event.target.errorCode);
+    };
+}
+
+
 // Function to load the selected template
+// function loadTemplate() {
+//     const selectedFile = templateSearch.value;
+//     chrome.storage.local.get('templates', function(data) {
+//         const template = data.templates.find(t => t.name === selectedFile);
+//         if (template) {
+//             templateContent.value = template.content;
+//         } else {
+//             console.error('Template not found');
+//         }
+//     });
+// }
+// Function to load the selected template from IndexedDB
 function loadTemplate() {
     const selectedFile = templateSearch.value;
-    chrome.storage.local.get('templates', function(data) {
-        const template = data.templates.find(t => t.name === selectedFile);
+
+    const transaction = db.transaction(['templates'], 'readonly');
+    const templateStore = transaction.objectStore('templates');
+    const request = templateStore.index('name').get(selectedFile);
+
+    request.onsuccess = function(event) {
+        const template = event.target.result;
         if (template) {
             templateContent.value = template.content;
         } else {
-            console.error('Template not found');
+            console.error('Template not found in IndexedDB');
         }
-    });
+    };
+
+    request.onerror = function(event) {
+        console.error('Error loading template:', event.target.errorCode);
+    };
 }
 
+
 // Function to load the default template
+// function loadDefaultTemplate() {
+//     chrome.storage.local.get('defaultTemplate', function(data) {
+//         if (data.defaultTemplate) {
+//             templateContent.value = data.defaultTemplate;
+//         } else {
+//             console.error('Default template not found');
+//         }
+//     });
+// }
+// Function to load the default template from IndexedDB
 function loadDefaultTemplate() {
-    chrome.storage.local.get('defaultTemplate', function(data) {
-        if (data.defaultTemplate) {
-            templateContent.value = data.defaultTemplate;
+    const transaction = db.transaction(['templates'], 'readonly');
+    const templateStore = transaction.objectStore('templates');
+    const request = templateStore.index('name').get('defaultTemplate');
+
+    request.onsuccess = function(event) {
+        const defaultTemplate = event.target.result;
+        if (defaultTemplate) {
+            templateContent.value = defaultTemplate.content;
         } else {
-            console.error('Default template not found');
+            console.error('Default template not found in IndexedDB');
         }
-    });
+    };
+
+    request.onerror = function(event) {
+        console.error('Error loading default template:', event.target.errorCode);
+    };
 }
 
 // Function to insert a variable into the template
@@ -75,19 +168,65 @@ function insertText(text) {
 }
 
 // Function to save the template
+// function saveTemplate() {
+//     const content = templateContent.value;
+//     const fileName = templateSearch.value || prompt('Enter the file name:');
+//     if (fileName) {
+//         chrome.storage.local.get('templates', function(data) {
+//             let templates = data.templates || [];
+//             const templateIndex = templates.findIndex(t => t.name === fileName);
+//             if (templateIndex > -1) {
+//                 templates[templateIndex].content = content;
+//             } else {
+//                 templates.push({ 
+//                     name: fileName,
+//                     // This is for the future
+//                     isTemplate: true,
+//                     template: fileName,
+//                     client: "TEMPLATE",
+//                     number: null, 
+//                     content: content,
+//                     timeSpent: null
+//                 });
+//             }
+//             chrome.storage.local.set({ templates: templates }, function() {
+//                 alert('Template saved successfully!');
+//             });
+//         });
+//     }
+// }
+
+// Function to save the template to IndexedDB
 function saveTemplate() {
-    const content = templateContent.value;
-    const fileName = templateSearch.value || prompt('Enter the file name:');
-    if (fileName) {
-        chrome.storage.local.get('templates', function(data) {
-            let templates = data.templates || [];
-            const templateIndex = templates.findIndex(t => t.name === fileName);
-            if (templateIndex > -1) {
-                templates[templateIndex].content = content;
-            } else {
-                templates.push({ 
+    initializeDB().then(() => {
+        const content = templateContent.value;
+        const fileName = templateSearch.value || prompt('Enter the file name:');
+        if (fileName) {
+            const transaction = db.transaction(['templates'], 'readwrite');
+            const templateStore = transaction.objectStore('templates');
+            
+            // Retrieve the template to check if it exists
+            const request = templateStore.index('name').get(fileName);
+
+            request.onsuccess = function(event) {
+                let templates = event.target.result || [];
+
+                // const templateIndex = templates.findIndex(t => t.name === fileName);
+                // if (templateIndex > -1) {
+                //     templates[templateIndex].content = content;
+                // } else {
+                //     templates.push({ 
+                //         name: fileName,
+                //         isTemplate: true,
+                //         template: fileName,
+                //         client: "TEMPLATE",
+                //         number: null, 
+                //         content: content,
+                //         timeSpent: null
+                //     });
+                // }
+                const saveRequest = templateStore.put({ 
                     name: fileName,
-                    // This is for the future
                     isTemplate: true,
                     template: fileName,
                     client: "TEMPLATE",
@@ -95,13 +234,22 @@ function saveTemplate() {
                     content: content,
                     timeSpent: null
                 });
-            }
-            chrome.storage.local.set({ templates: templates }, function() {
-                alert('Template saved successfully!');
-            });
-        });
-    }
+                saveRequest.onsuccess = function() {
+                    alert('Template saved successfully!');
+                };
+
+                saveRequest.onerror = function(event) {
+                    console.error('Error saving template:', event.target.errorCode);
+                };
+            };
+
+            request.onerror = function(event) {
+                console.error('Error retrieving template:', event.target.errorCode);
+            };
+        }
+    });
 }
+
 
 // Function to create autocomplete functionality
 function autocomplete(input, options) {
@@ -189,4 +337,8 @@ insertQueryBtn.addEventListener('click', insertQuery);
 saveTemplateBtn.addEventListener('click', saveTemplate);
 
 // Fetch template files on page load
-fetchTemplateFiles();
+// Make sure to call this function before any DB operations
+initializeDB().then(() => {
+    fetchTemplateFiles();
+});
+

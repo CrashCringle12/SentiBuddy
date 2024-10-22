@@ -3,8 +3,11 @@ const MOUSE_VISITED_CLASSNAME = 'crx_mouse_visited';
 const ELEMENT_CHANGED_CLASSNAME = 'elm_changed';
 
 let enabled = false;
-let observer, targetElem, DOMObserver;
+let observer, targetElem, DOMObserver, detailsElem;
 let targetParents = [];
+
+// Previous Incident Clicked Data
+let previousData = {};
 
 let incidents = {};
 // Previous dom, that we want to track, so we can remove the previous styling.
@@ -261,6 +264,62 @@ var defaultQueue = function () {
       console.log("Finished Initializing")
       initializing = false
     }
+    detailsElem = document.querySelector(".ext-details-header-content");
+    console.log(detailsElem);
+    if (detailsElem) {
+      // Extract incident number
+      const incNumberMatch = document.querySelector('.msportalfx-font-semibold.ext-details-header-subtitle')?.textContent.trim().match(/Incident number (\d+)/);
+      const incNumber = incNumberMatch ? incNumberMatch[1] : '';
+
+      // Extract incident title
+      const incTitle = document.querySelector('.ext-details-header-title')?.textContent.trim() || '';
+
+      const ownerElem = document.querySelectorAll('.msportalfx-font-semibold.msportalfx-text-ellipsis.ext-details-header-item-value')[0];
+      const statusElem = document.querySelectorAll('.msportalfx-font-semibold.msportalfx-text-ellipsis.ext-details-header-item-value')[1];
+      const severityElem = document.querySelectorAll('.msportalfx-font-semibold.msportalfx-text-ellipsis.ext-details-header-item-value')[2];
+
+      const owner = ownerElem ? ownerElem.textContent.trim() : '';
+      const status = statusElem ? statusElem.textContent.trim() : '';
+      const severity = severityElem ? severityElem.textContent.trim() : '';
+
+      let workspace = '';
+      let description = '';
+
+      const propertyContainers = document.querySelectorAll('.ext-propertyControl-title-container');
+      propertyContainers.forEach(container => {
+        const title = container.textContent.trim();
+        const nextElement = container.nextElementSibling;
+
+        if (title.includes('Workspace') && nextElement) {
+          const workspaceMatch = nextElement.querySelector('article')?.textContent.trim().match(/xdrworkspace-(\w+)/);
+          workspace = workspaceMatch ? workspaceMatch[1] : '';
+        } else if (title.includes('Description') && nextElement) {
+          description = nextElement.querySelector('article')?.textContent.trim() || '';
+        }
+      });
+
+      const relevantText = { incTitle, incNumber, owner, status, severity, workspace, description };
+
+      // Check if detailsElem exists, incTitle and incNumber are not null or blank, and relevantText has changed
+      if (detailsElem && incTitle && incNumber && 
+        (previousData.incTitle !== incTitle || previousData.incNumber !== incNumber || previousData.workspace !== workspace)) {
+        console.log("Update")
+        // Save the relevant text to Chrome storage
+        chrome.storage.local.set({ relevantText: relevantText }, function() {
+          console.log("Relevant text updated:", relevantText);
+          previousData = relevantText; // Update previousData to the new values
+          var message = {
+            type: 'set-lastAlertData',
+            element: detailsElem,
+            info: relevantText
+          }
+          chrome.runtime.sendMessage(message);
+        });
+      } else {
+        console.log("Do not update")
+      }
+    }
+    
   });
 
   observer.observe(targetElem, { childList: true, subtree: true, characterData: true, attributes: true });

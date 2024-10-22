@@ -95,6 +95,11 @@
         </label>
         <br>
         <label>
+            Show Experimental Features:
+            <input type="checkbox" id="toggleExperiments" />
+        </label>
+        <br>
+        <label>
             AbuseIPDB API Key:
             <input type="text" id="abuseipdbAPIkey" />
         </label>
@@ -130,13 +135,14 @@
         <button type="button" id="addOwnerPattern">Add Pattern</button>
     </div>
     <div id="NoteTakingOptions" class="tabcontent">
-        <button id="saveNoteTaking" class="button">Save Notes Config</button>
-        <button id="exportNoteTaking" class="button">Export Notes Config</button>
-        <button id="importNoteTaking" class="button">Import Notes Config</button>
+        <h3>[Experimental]</h3>
+        <button id="saveNoteTaking" class="button">Save Config</button>
+        <button id="exportNoteTaking" class="button">Export Config</button>
+        <button id="importNoteTaking" class="button">Import Config</button>
         <div id="statusNoteTaking"></div>
         <br>
         <label>
-            Default Incident Number Prefix:
+            Incident # Prefix:
             <input type="text" id="incidentPrefix" />
         </label>
         <br>
@@ -145,6 +151,7 @@
             <input type="text" id="defaultTemplate" />
         </label>
         <br>
+        <label><b>Clients:</b></label>
         <div id="clientsList"></div>
         <button id="addClient" class="button">Add Client</button>
     </div>

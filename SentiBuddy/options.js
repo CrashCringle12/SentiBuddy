@@ -11,6 +11,43 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
+function checkExperiments() {
+    chrome.storage.local.get(['toggleExperiments'], function(result) {
+        const toggleExperiments = result.toggleExperiments || false;
+        
+        // Show or hide Note-Taking options based on toggleExperiments
+        const noteTakingTabButton = document.getElementById('noteTakingOptionsTab');
+        const noteTakingOptionsContent = document.getElementById('NoteTakingOptions');
+        
+        if (toggleExperiments) {
+            noteTakingTabButton.style.display = 'inline-block';
+            noteTakingOptionsContent.style.display = 'none'; // Hide by default until tab is clicked
+        } else {
+            noteTakingTabButton.style.display = 'none'; // Hide the Note-Taking options tab if experiments are off
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById("GeneralOptions").style.display = "block";
+        }
+    });
+}
+
+
+function clickToggleExperiments() {
+    const checked = document.getElementById('toggleExperiments').checked;
+    console.log(checked)
+    if (checked) {
+        document.getElementById('noteTakingOptionsTab').style.display = 'inline-block';
+        document.getElementById('NoteTakingOptions').style.display = 'none'; // Hide by default until tab is clicked
+    } else {
+        document.getElementById('noteTakingOptionsTab').style.display = 'none'; // Hide the Note-Taking options tab if experiments are off
+    }
+}
 // Note-Taking Options Functions
 function saveNoteTakingOptions() {
     const incidentPrefix = document.getElementById('incidentPrefix').value.trim();
@@ -21,9 +58,8 @@ function saveNoteTakingOptions() {
 
     for (let i = 0; i < inputs.length; i += 2) {
         const name = inputs[i].value.trim();
-        const projectCode = inputs[i + 1].value.trim();
-        if (name && projectCode) {
-            clients.push({ name, projectCode });
+        if (name) {
+            clients.push({ name });
         }
     }
 
@@ -40,17 +76,25 @@ function saveNoteTakingOptions() {
     });
 }
 
+// function restoreNoteTakingOptions() {
+//     chrome.storage.local.get(['incidentPrefix', 'defaultTemplate', 'clients'], (items) => {
+//         document.getElementById('incidentPrefix').value = items.incidentPrefix || '';
+//         document.getElementById('defaultTemplate').value = items.defaultTemplate || '';
+//         const clients = items.clients || [];
+//         clients.forEach(client => addClient(client.name, client.projectCode));
+//     });
+// }
 function restoreNoteTakingOptions() {
-    chrome.storage.local.get(['incidentPrefix', 'defaultTemplate', 'clients'], (items) => {
-        document.getElementById('incidentPrefix').value = items.incidentPrefix || '';
-        document.getElementById('defaultTemplate').value = items.defaultTemplate || '';
-        const clients = items.clients || [];
-        clients.forEach(client => addClient(client.name, client.projectCode));
-    });
+        chrome.storage.local.get(['incidentPrefix', 'defaultTemplate', 'clients'], (items) => {
+            document.getElementById('incidentPrefix').value = items.incidentPrefix || '';
+            document.getElementById('defaultTemplate').value = items.defaultTemplate || '';
+            const clients = items.clients || [];
+            clients.forEach(client => addClient(client.name));
+        });
 }
 
 // Client Options Functions
-function addClient(name = '', projectCode = '') {
+function addClient(name = '') {
     const clientsList = document.getElementById('clientsList');
     const div = document.createElement('div');
 
@@ -60,11 +104,11 @@ function addClient(name = '', projectCode = '') {
     nameInput.value = name;
     div.appendChild(nameInput);
 
-    const projectCodeInput = document.createElement('input');
-    projectCodeInput.type = 'text';
-    projectCodeInput.placeholder = 'Project Code';
-    projectCodeInput.value = projectCode;
-    div.appendChild(projectCodeInput);
+    // const projectCodeInput = document.createElement('input');
+    // projectCodeInput.type = 'text';
+    // projectCodeInput.placeholder = 'Project Code';
+    // projectCodeInput.value = projectCode;
+    // div.appendChild(projectCodeInput);
 
     const removeBtn = document.createElement('button');
     removeBtn.textContent = 'Remove';
@@ -105,7 +149,8 @@ const saveOptions = () => {
     const ipInfoKey = document.getElementById('ipInfoKey').value.trim();
     const vtkey = document.getElementById('vtkey').value.trim();
     const scamalyticsURL = document.getElementById('scamalyticsURL').value.trim();
-    
+    const toggleExperiments = document.getElementById('toggleExperiments').checked;
+
     chrome.storage.local.set({
         doRemoveFromFilteredFromQueue: removeFromQueue,
         filterTitleRegexPatterns: titlePatterns,
@@ -114,6 +159,7 @@ const saveOptions = () => {
         onlyAlertOnLatest: alertOnLatest,
         desktopNotifications: desktopNotifications,
         abuseipdbAPIkey: abuseipdbAPIkey,
+        toggleExperiments: toggleExperiments,
         vtkey: vtkey,
         ipInfoKey: ipInfoKey,
         scamalyticsURL: scamalyticsURL
@@ -134,6 +180,7 @@ function restoreOptions() {
         filterOwnerRegexPatterns: [],
         onlyAlertOnLatest: false,
         desktopNotifications: true,
+        toggleExperiments: false,
         abuseipdbAPIkey: '',
         vtkey: '',
         ipInfoKey: '',
@@ -142,6 +189,7 @@ function restoreOptions() {
         document.getElementById('removeFromQueue').checked = items.doRemoveFromFilteredFromQueue;
         document.getElementById('alertOnLatest').checked = items.onlyAlertOnLatest;
         document.getElementById('desktopNotifications').checked = items.desktopNotifications;
+        document.getElementById('toggleExperiments').checked = items.toggleExperiments;
         items.filterTitleRegexPatterns.forEach(pattern => addPattern('titlePatterns', pattern));
         items.filterTagsRegexPatterns.forEach(pattern => addPattern('tagPatterns', pattern));
         items.filterOwnerRegexPatterns.forEach(pattern => addPattern('ownerPatterns', pattern));
@@ -224,6 +272,81 @@ function exportNoteTakingData() {
     });
 }
 
+function exportTemplates() {
+    initializeDB().then(() => {
+        const transaction = db.transaction(['templates'], 'readonly');
+        const templateStore = transaction.objectStore('templates');
+        const request = templateStore.getAll();
+
+        request.onsuccess = function (event) {
+            const templates = event.target.result;
+            const jsonData = JSON.stringify(templates, null, 4);
+            const blob = new Blob([jsonData], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "templates.json";
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+
+        request.onerror = function (event) {
+            console.error('Error exporting templates:', event.target.errorCode);
+        };
+    });
+}
+
+function importTemplates(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const importedTemplates = JSON.parse(event.target.result);
+            if (Array.isArray(importedTemplates)) {
+                initializeDB().then(() => {
+                    const transaction = db.transaction(['templates'], 'readwrite');
+                    const templateStore = transaction.objectStore('templates');
+
+                    importedTemplates.forEach(template => {
+                        const getRequest = templateStore.get(template.name);
+
+                        getRequest.onsuccess = function(event) {
+                            const existingTemplate = event.target.result;
+                            if (!existingTemplate) {
+                                // Add new template
+                                templateStore.add(template);
+                            } else {
+                                // Update existing template
+                                templateStore.put(template);
+                            }
+                        };
+
+                        getRequest.onerror = function(event) {
+                            console.error('Error fetching template for import:', event.target.errorCode);
+                        };
+                    });
+
+                    transaction.oncomplete = function () {
+                        console.log('Templates imported successfully');
+                    };
+
+                    transaction.onerror = function (event) {
+                        console.error('Error importing templates:', event.target.errorCode);
+                    };
+                });
+            }
+        } catch (e) {
+            console.error('Failed to parse templates file:', e);
+        }
+    };
+    reader.readAsText(file);
+}
+
+
 function importNoteTakingData(event) {
     const file = event.target.files[0];
     if (!file) {
@@ -239,7 +362,6 @@ function importNoteTakingData(event) {
             chrome.storage.local.set(jsonObj, () => {
                 console.log('Note-taking data imported successfully');
                 restoreNoteTakingOptions(); // Refresh the UI to reflect the imported data
-                fetchTemplateFiles();
             });
         } catch (e) {
             console.error('Failed to parse note-taking data file:', e);
@@ -255,24 +377,15 @@ function createImportFileInput() {
     fileInput.click();
 }
 
-// Function to fetch the list of template files from Chrome storage
-function fetchTemplateFiles() {
-    chrome.storage.local.get('templates', function(data) {
-        if (data.templates) {
-            templateFiles = data.templates.map(template => template.name);
-        } else {
-            console.error('No templates found in storage');
-        }
-    });
-}
 
 // Restore options on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', (event) => {
+    checkExperiments(); // Check if experimental features are enabled
+
     document.getElementById("generalOptionsTab").addEventListener('click', (evt) => openTab(evt, 'GeneralOptions'));
     document.getElementById("noteTakingOptionsTab").addEventListener('click', (evt) => openTab(evt, 'NoteTakingOptions'));
     restoreOptions();
     restoreNoteTakingOptions();
-    fetchTemplateFiles();
 });
 
 // Event listeners for general options
@@ -290,3 +403,5 @@ document.getElementById('importNoteTaking').addEventListener('click', createImpo
 
 // Event listeners for client options
 document.getElementById('addClient').addEventListener('click', () => addClient());
+
+document.getElementById('toggleExperiments').addEventListener('click', clickToggleExperiments);
