@@ -19,25 +19,446 @@ function checkHashType(hash) {
 }
 let isNotifToggled;
 function setLoading() {
-    document.getElementById('results').innerHTML  = `<h1>Loading...</h1>`
+    document.getElementById('results').innerHTML  = `<div class="link-block"><span>🔍 Analyzing IP address...</span></div>`
 }
 
+let devData;
+let data;
+// Client Info Table Functions
+function renderTable(filteredData) {
+  const tableBody = document.getElementById("tableBody");
+  tableBody.innerHTML = "";
+  filteredData.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.code}</td>
+      <td>${row.client}</td>
+      <td>${row.department}</td>
+      <td>${row.description}</td>
+      <td>${row.edr}</td>
+      <td>${row.contact}</td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+// Development Table Functions
+function renderDevTable(filteredData) {
+  const tableBody = document.getElementById("devTableBody");
+  tableBody.innerHTML = "";
+  filteredData.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.client}</td>
+      <td>${row.sentinelInstance}</td>
+      <td>${row.resourceGroup}</td>
+      <td>${row.subscription}</td>
+      <td>${row.location}</td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+var configDataURL = '';
+function loadConfigURL() {
+  chrome.storage.local.get({
+    configDataURL: ''
+  }, (items) => {
+    configDataURL = items.configDataURL
+    fetchClientData();
+  });
+}
+
+async function fetchClientData() {
+    const cacheKey = 'cachedConfig';
+    const timestampKey = 'cachedConfigTimestamp';
+    const now = Date.now();
+    const cacheDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+  
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedTimestamp = localStorage.getItem(timestampKey);
+  
+    if (cachedData && cachedTimestamp && (now - parseInt(cachedTimestamp) < cacheDuration)) {
+      // Use cached data
+      devData = JSON.parse(cachedData).clientInfoData.devData;
+      data = JSON.parse(cachedData).clientInfoData.data
+    } else {
+        try {        
+          const response = await fetch(configDataURL); // Replace with actual URL
+          const result = await response.json();
+          devData = result.clientInfoData.devData;
+          data = result.clientInfoData.data
+
+        // Cache result
+        localStorage.setItem(cacheKey, JSON.stringify(result));
+        localStorage.setItem(timestampKey, now.toString());
+  
+      } catch (error) {
+        console.error('Failed to fetch client data:', error);
+        return;
+      }
+    } 
+    renderTable(data);
+    renderDevTable(devData);
+  }
+  
+document.getElementById("searchBox").addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  const filtered = data.filter(item => item.code.toLowerCase().includes(query));
+  renderTable(filtered);
+});
+
+document.getElementById("devSearchBox").addEventListener("input", function () {
+  const query = this.value.toLowerCase();
+  const filtered = devData.filter(item => item.client.toLowerCase().includes(query));
+  renderDevTable(filtered);
+});
+
+document.getElementById("revealBtn").addEventListener("click", function () {
+  const content = document.getElementById("spoilerContent");
+  content.classList.toggle("revealed");
+
+  this.textContent = content.classList.contains("revealed") ? "Hide" : "Reveal";
+});
+
+// Navigation Functions
+document.getElementById("clientBtn").addEventListener("click", () => {
+  document.getElementById("clientSection").style.display = "block";
+  document.getElementById("osintSection").style.display = "none";
+    document.getElementById("queueSection").style.display = "none";
+  document.getElementById("developmentSection").style.display = "none";
+  document.getElementById("clientBtn").classList.add("active");
+  document.getElementById("osintBtn").classList.remove("active");
+  document.getElementById("developmentBtn").classList.remove("active");
+    document.getElementById("queueBtn").classList.remove("active");
+});
+
+document.getElementById("osintBtn").addEventListener("click", () => {
+  document.getElementById("clientSection").style.display = "none";
+  document.getElementById("osintSection").style.display = "block";
+    document.getElementById("queueSection").style.display = "none";
+  document.getElementById("developmentSection").style.display = "none";
+  document.getElementById("osintBtn").classList.add("active");
+  document.getElementById("clientBtn").classList.remove("active");
+  document.getElementById("developmentBtn").classList.remove("active");
+    document.getElementById("queueBtn").classList.remove("active");
+});
+
+document.getElementById("developmentBtn").addEventListener("click", () => {
+  document.getElementById("clientSection").style.display = "none";
+  document.getElementById("osintSection").style.display = "none";
+  document.getElementById("queueSection").style.display = "none";
+  document.getElementById("developmentSection").style.display = "block";
+  document.getElementById("developmentBtn").classList.add("active");
+  document.getElementById("queueBtn").classList.remove("active");
+  document.getElementById("clientBtn").classList.remove("active");
+  document.getElementById("osintBtn").classList.remove("active");
+});// Updated data with placeholder hyperlinks for EDR and a new Contacts field
+
+document.getElementById("queueBtn").addEventListener("click", () => {
+      document.getElementById("queueSection").style.display = "block";
+  document.getElementById("clientSection").style.display = "none";
+  document.getElementById("osintSection").style.display = "none";
+  document.getElementById("developmentSection").style.display = "none";
+  document.getElementById("developmentBtn").classList.remove("active");
+  document.getElementById("queueBtn").classList.add("active");
+  document.getElementById("clientBtn").classList.remove("active");
+  document.getElementById("osintBtn").classList.remove("active");
+});
+
+// Close modal when clicking outside of it
+window.addEventListener("click", (event) => {
+  const modal = document.getElementById("settingsModal");
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+});
+loadConfigURL()
+
+// OSINT Analysis Functions
+let analysisTimeout;
+
+document.getElementById("osintInput").addEventListener("input", () => {
+  const input = document.getElementById("osintInput").value.trim();
+  const osintResults = document.getElementById("results");
+  const copyAllBtn = document.getElementById("copyAllBtn");
+
+  // Clear previous results and timeout
+  clearTimeout(analysisTimeout);
+  osintResults.innerHTML = "";
+  copyAllBtn.style.display = "none";
+
+  // Validate IP address
+  const isIP = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(input);
+  
+  if (!isIP || !input) {
+    return;
+  }
+
+  // Show loading state
+  osintResults.innerHTML = '<div class="link-block"><span>🔍 Analyzing IP address...</span></div>';
+
+  // Debounce API calls
+  analysisTimeout = setTimeout(() => {
+    performOSINTAnalysis(input);
+  }, 500);
+});
+
+async function performOSINTAnalysis(ip) {
+  const osintResults = document.getElementById("results");
+  const copyAllBtn = document.getElementById("copyAllBtn");
+  
+  const vtApiKey = localStorage.getItem("vtApiKey");
+  const abuseApiKey = localStorage.getItem("abuseApiKey");
+
+  if (!vtApiKey || !abuseApiKey) {
+    osintResults.innerHTML = `
+      <div class="link-block">
+        <span>⚠️ API keys not configured. Please click Settings to add your VirusTotal and AbuseIPDB API keys.</span>
+      </div>
+    `;
+    return;
+  }
+
+  try {
+    console.log('Sending message to background script...');
+    
+    // Check if chrome.runtime is available
+    if (!chrome.runtime || !chrome.runtime.sendMessage) {
+      throw new Error('Chrome runtime not available');
+    }
+    
+    // Use Chrome extension background script for API calls
+    const response = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: 'fetchOSINTData',
+        ip: ip,
+        vtApiKey: vtApiKey,
+        abuseApiKey: abuseApiKey
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('Chrome runtime error:', chrome.runtime.lastError);
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (!response) {
+          console.error('No response received from background script');
+          reject(new Error('No response from background script'));
+        } else {
+          console.log('Response received:', response);
+          resolve(response);
+        }
+      });
+    });
+
+    if (!response.success) {
+      throw new Error(response.error);
+    }
+
+    const { vtData, abuseData } = response.data;
+
+    // Extract information
+    const analysisResult = extractAnalysisData(ip, vtData, abuseData);
+    
+    // Display analysis results
+    displayAnalysisResults(analysisResult);
+    
+    // Show reference links and copy all button
+    displayReferenceLinks(ip);
+    copyAllBtn.style.display = "block";
+
+  } catch (error) {
+    console.error("Error fetching OSINT data:", error);
+    osintResults.innerHTML = `
+      <div class="link-block">
+        <span>❌ Error fetching data: ${error.message}</span>
+        <button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px; background: #ff9a9e; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
+      </div>
+    `;
+  }
+}
+
+// Helper function to make API requests through Chrome extension
+async function makeApiRequest(url, headers) {
+  return new Promise((resolve, reject) => {
+    fetch(url, {
+      method: 'GET',
+      headers: headers,
+      mode: 'cors'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => resolve(data))
+    .catch(error => reject(error));
+  });
+}
+
+function extractAnalysisData(ip, vtData, abuseData) {
+  // Extract VirusTotal data
+  const vtAttributes = vtData?.data?.attributes || {};
+  const vtStats = vtAttributes.last_analysis_stats || {};
+  const vtScore = `${vtStats.malicious || 0}/${Object.values(vtStats).reduce((a, b) => a + b, 0)}`;
+  
+  // Enhanced VPN detection from multiple sources
+  let isVPN = false;
+  
+  // Check categories
+  const vtCategories = vtAttributes.categories || {};
+  if (Object.values(vtCategories).some(category => 
+    category.toLowerCase().includes('vpn') || 
+    category.toLowerCase().includes('proxy') ||
+    category.toLowerCase().includes('anonymizer')
+  )) {
+    isVPN = true;
+  }
+  
+  // Check last_analysis_results for VPN indicators
+  const analysisResults = vtAttributes.last_analysis_results || {};
+  for (const [engine, result] of Object.entries(analysisResults)) {
+    if (result.result && typeof result.result === 'string') {
+      const resultText = result.result.toLowerCase();
+      if (resultText.includes('vpn') || resultText.includes('proxy') || 
+          resultText.includes('anonymizer') || resultText.includes('tor')) {
+        isVPN = true;
+        break;
+      }
+    }
+  }
+  
+  // Check ASN and network info for hosting/VPN providers
+  const asn = vtAttributes.asn || 0;
+  const asOwner = vtAttributes.as_owner || '';
+  const network = vtAttributes.network || '';
+  
+  const vpnProviders = ['nordvpn', 'expressvpn', 'surfshark', 'protonvpn', 'cyberghost', 
+                       'privateinternetaccess', 'tunnelbear', 'windscribe', 'hotspot shield',
+                       'purevpn', 'ipvanish', 'vyprvpn', 'torguard', 'perfect privacy',
+                       'mullvad', 'ovpn', 'azire', 'ivpn', 'hide.me', 'vpn.ac'];
+  
+  const hostingProviders = ['digital ocean', 'amazon', 'google cloud', 'microsoft azure',
+                           'ovh', 'hetzner', 'linode', 'vultr', 'scaleway', 'contabo'];
+  
+  if (asOwner.toLowerCase().includes('vpn') || 
+      asOwner.toLowerCase().includes('proxy') ||
+      vpnProviders.some(provider => asOwner.toLowerCase().includes(provider)) ||
+      hostingProviders.some(provider => asOwner.toLowerCase().includes(provider))) {
+    isVPN = true;
+  }
+
+  // Extract AbuseIPDB data
+  const abuseResult = abuseData?.data || {};
+  const abuseScore = `${abuseResult.abuseConfidencePercentage || 0}%`;
+  const isp = abuseResult.isp || "Unknown";
+  const countryCode = abuseResult.countryName || "Unknown";
+
+  return {
+    ip,
+    isp,
+    location: countryCode,
+    vtScore,
+    abuseScore,
+    isVPN,
+    vtData, // Include raw VT data for debugging
+    abuseData, // Include raw AbuseIPDB data for debugging
+    debugInfo: {
+      categories: vtCategories,
+      asn: asn,
+      asOwner: asOwner,
+      network: network
+    }
+  };
+}
+let analysisText = '';
+
+// Global function to toggle AbuseIPDB debug info
+window.toggleAbuseDebug = function(button) {
+  const debugDiv = button.closest('.link-block').querySelector('.abuse-debug-content');
+  if (debugDiv.style.display === 'none') {
+    debugDiv.style.display = 'block';
+    button.textContent = 'Hide';
+  } else {
+    debugDiv.style.display = 'none';
+    button.textContent = 'Show';
+  }
+};
+
+// Global function to copy analysis results
+window.copyAnalysisResults = function(text, button) {
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = button.textContent;
+    button.textContent = "Copied!";
+    setTimeout(() => button.textContent = originalText, 1000);
+  }).catch(err => {
+    console.error('Failed to copy text: ', err);
+  });
+};
+
+
+
+function displayReferenceLinks(ip) {
+  const osintResults = document.getElementById("results");
+  
+  const urls = [
+    `https://www.virustotal.com/gui/ip-address/${ip}`,
+    `https://www.abuseipdb.com/check/${ip}`,
+    `https://spur.us/context/${ip}`,
+    `https://scamalytics.com/ip/${ip}`
+  ];
+
+  const labels = ["VirusTotal", "AbuseIPDB", "Spur.us", "Scamalytics"];
+
+  urls.forEach((url, index) => {
+    const div = document.createElement("div");
+    div.className = "link-block";
+    div.innerHTML = `
+      <a href="${url}" target="_blank" style="text-decoration: none; color: inherit;">
+        🔗 ${labels[index]}
+      </a>
+      <button class="copy-btn" data-url="${url}">Copy</button>
+    `;
+    osintResults.appendChild(div);
+  });
+
+  // Add copy functionality to individual buttons
+  document.querySelectorAll(".copy-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      navigator.clipboard.writeText(btn.dataset.url).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = originalText, 1000);
+      });
+    });
+  });
+
+  // Setup Copy All functionality
+  const copyAllBtn = document.getElementById("copyAllBtn");
+  copyAllBtn.onclick = () => {
+    const fullText = urls.join('\n');
+    navigator.clipboard.writeText(fullText).then(() => {
+      const originalText = copyAllBtn.textContent;
+      copyAllBtn.textContent = "Copied!";
+      setTimeout(() => copyAllBtn.textContent = originalText, 1000);
+    });
+  };
+}
 
 // button selectors
-const notesButton = document.querySelector('senti-button#openNoteTaking');
+const notesButton = document.getElementById("openNoteTakingBtn");
 const queueButton = document.querySelector('senti-button#startQueueFiltering');
 const defangUrlButton = document.querySelector('senti-button#defangURL');
 const ipCheckButton = document.querySelector('senti-button#checkIp');
 const hashCheckButton = document.querySelector('senti-button#checkHash');
 const notificationButton = document.querySelector('senti-button#notificationToggle');
-const settingsButton = document.querySelector('senti-button#settings')
+const settingsButton = document.getElementById("settingsBtn");
 const startQueueButton = document.getElementById('startQueueFiltering');
 document.addEventListener('DOMContentLoaded', () => {
     // Fetch the value of toggleExperiments from Chrome storage
     chrome.storage.local.get('toggleExperiments', function(result) {
         if (result.toggleExperiments) {
             // If toggleExperiments is true, show the Note Taking button
-            document.getElementById('openNoteTaking').style.display = 'inline-block';
+            document.getElementById('openNoteTakingBtn').style.display = 'flex';
         }
     });
     
@@ -74,6 +495,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
 });
+
+document.getElementById('openDashboard').addEventListener('click', () => {
+    console.log("TEST")
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('dashboard.html') // adjust if the filename is different
+    });
+  });
+  
 
 notificationButton.addEventListener('click', () => {
     chrome.storage.local.get(["desktopNotifications"]).then((result) => {
@@ -254,7 +683,10 @@ function displayResults(response) {
                 const body = document.querySelector('body');
                 body.style.minWidth = '320px'; // Slimmer for IPs
                 document.getElementById('results').innerHTML = `
-                    <h1>OSINT Results</h1>
+                    <div style="width: 100%; font-weight: bold; margin-bottom: 4px; color: #2d3748; display: flex; justify-content: space-between; align-items: center;">
+                    <h1>📊 OSINT Results</h1>
+                    <button id="copyAnalysisBtn" style="padding: 4px 8px; background: #ff9a9e; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">Copy</button>
+                  </div>
                     <h2><span class="key">IP:</span> ${response.abuseIPDB.ipAddress}</h2>
                     <div class="content"><span class="key">Reports:</span> ${response.abuseIPDB.totalReports || 0} reports with a <span class="${scoreClass}">${response.abuseIPDB.abuseConfidenceScore || 0}%</span> Confidence of abuse.</div>
                     <div class="progress-container">
@@ -266,11 +698,10 @@ function displayResults(response) {
                     <div class="content"><span class="key">GeoLocation:</span> ${geoLocation}</div>
                     <div class="content"><span class="key">UsageType:</span> ${response.abuseIPDB.usageType || 'No usage type available'}</div>
                     <div class="content"><span class="key">Host:</span> ${hostnames}</div>
-                    <a href="https://www.abuseipdb.com/check/${response.abuseIPDB.ipAddress}" target="_blank">View on AbuseIPDB</a></br>
-                    <a href="https://scamalytics.com/ip/${response.abuseIPDB.ipAddress}" target="_blank">View on Scamalytics</a></br>
-                    <a href="https://spur.us/context/${response.abuseIPDB.ipAddress}" target="_blank">View on Spur</a><br>
-                    <a href="https://www.virustotal.com/gui/ip-address/${response.abuseIPDB.ipAddress}" target="_blank">View on VirusTotal</a>
                 `;
+                analysisText = document.getElementById('results').textContent
+                displayReferenceLinks(response.abuseIPDB.ipAddress)
+                
             } else {
                 document.getElementById('results').innerHTML = `Error fetching data from AbuseIPDB`;        
             }
@@ -298,6 +729,10 @@ function displayResults(response) {
                 const comments =  (vtData.signature_info && vtData.signature_info.comments) || "No Comments"
                 const signers =  (vtData.signature_info && vtData.signature_info.signers) ? vtData.signature_info.signers.split(';') : ["N/A"]
                 document.getElementById('results').innerHTML  = `
+                    <div style="width: 100%; font-weight: bold; margin-bottom: 4px; color: #2d3748; display: flex; justify-content: space-between; align-items: center;">
+                    <h1>📊 OSINT Results</h1>
+                    <button id="copyAnalysisBtn" style="padding: 4px 8px; background: #ff9a9e; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;">Copy</button>
+                  </div>
                     <h1>OSINT Results</h1>
                     <p><strong>Security Vendors:</strong> ${vtData.last_analysis_stats.malicious} out of ${vtData.last_analysis_stats.undetected + vtData.last_analysis_stats.malicious} security vendors and ${typeUnsupported} sandboxes flagged this file as malicious</p>
                     <div class="circle-container">
@@ -353,8 +788,30 @@ function displayResults(response) {
                 document.getElementById('toggleHashes').addEventListener('click', () => toggleVisibility('hashes'));
                 document.getElementById('toggleSignatureInfo').addEventListener('click', () => toggleVisibility('signatures'));
                 document.getElementById('toggleVendorLabels').addEventListener('click', () => toggleVisibility('vendorLabels'));
-            }
-            
+                analysisText = document.getElementById('results').textContent
+                  
+            }       
         }
+                 // Add click event listener to the copy button
+        document.getElementById('copyAnalysisBtn').addEventListener('click', function() {
+          navigator.clipboard.writeText(analysisText).then(() => {
+            const originalText = this.textContent;
+            this.textContent = "Copied!";
+            setTimeout(() => this.textContent = originalText, 1000);
+          }).catch(err => {
+            console.error('Failed to copy text: ', err);
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = analysisText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const originalText = this.textContent;
+            this.textContent = "Copied!";
+            setTimeout(() => this.textContent = originalText, 1000);
+          });
+        });
     }
 }

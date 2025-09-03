@@ -88,7 +88,8 @@ function fetchAbuseIPDB(ip, apiKey) {
   });
   const queryParams = new URLSearchParams({ ipAddress: ip, maxAgeInDays: maxAgeInDays, verbose: verbose });
   const url = `https://api.abuseipdb.com/api/v2/check?${queryParams}`;
-  return fetch(url, { headers: headers })
+  
+  return fetch(url, { method: 'GET', headers: headers, mode: 'cors' })
     .then(response => response.json());
 }
 
@@ -113,7 +114,8 @@ function fetchVirusTotalIP(ip, VTkey) {
     headers: {
       accept: 'application/json',
       'x-apikey': VTkey
-    }
+    },
+    mode: 'cors'
   };
 
   fetch(`https://www.virustotal.com/api/v3/ip_addresses/${ip}`, options)
@@ -133,7 +135,8 @@ function fetchVirusTotalHash(hash, VTkey) {
     headers: {
       accept: 'application/json',
       'x-apikey': VTkey
-    }
+    },
+    mode: 'cors'
   };
   return fetch(`https://www.virustotal.com/api/v3/files/${hash}`, options)
     .then(response => response.json());

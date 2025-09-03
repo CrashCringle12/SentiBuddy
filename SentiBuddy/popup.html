@@ -3,27 +3,84 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>OSINT</title>
+    <title>Client Tool</title>
     <link rel="stylesheet" href="css/popup.css">
 </head>
+
 <body>
-    <div id="popup-content">
-        <senti-button id="settings" color="grey" text-color="#FFFFFF" icon="\2699"></senti-button>
-        <senti-button id="openNoteTaking" color="grey" text-color="#FFFFFF" icon="\1F5CA" style="display:none;"></senti-button>
-        <br>
-        <div id="grouping">
-        <senti-button id="notificationToggle" color="#D83B01" text-color="#FFFFFF"
-            text="Notifications: Off"></senti-button>
-        <senti-button id="startQueueFiltering" color="#D83B01" text-color="#FFFFFF"
-            text="Queue Filter: Off"></senti-button>
+    <div class="container">
+        <div class="nav">
+            <button id="queueBtn">Queue</button>
+            <button id="clientBtn"  class="active">Client Info</button>
+            <button id="developmentBtn">Development</button>
+            <button id="osintBtn">Tools</button>
+            <button id="openNoteTakingBtn" style="display:none;">Notes📝</button>
+            <button id="settingsBtn">⚙️</button>
         </div>
-        <div id="grouping">
-            <senti-button id="checkIp" color="#0078D4" text-color="#FFFFFF" text="Check IP" tooltip="Check an IP address for reputation"></senti-button>
+        <div id="queueSection" style="display: none;"">
+            <div id="grouping">
+                <senti-button id="openDashboard" color="#0078D4" text-color="#FFFFFF"
+                    text="Open Dashboard"></senti-button>
+                <senti-button id="notificationToggle" color="#D83B01" text-color="#FFFFFF"
+                    text="Notifications: Off"></senti-button>
+                <senti-button id="startQueueFiltering" color="#D83B01" text-color="#FFFFFF"
+                    text="Queue Filter: Off"></senti-button>
+            </div>
+        </div>
+
+        <!-- Client Info Section -->
+        <div id="clientSection">
+            <button id="revealBtn">Reveal</button>
+            <input type="text" id="searchBox" placeholder="Search by Code..." />
+            <div class="spoiler" id="spoilerContent">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Client</th>
+                            <th>Department</th>
+                            <th>Client Lead</th>
+                            <th>EDR</th>
+                            <th>Contacts</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- OSINT Section -->
+        <div id="osintSection" style="display: none;">
+            <senti-button id="checkIp" color="#0078D4" text-color="#FFFFFF" text="Check IP"
+                tooltip="Check an IP address for reputation"></senti-button>
             <senti-button id="checkHash" color="#0078D4" text-color="#FFFFFF" text="Check Hash"></senti-button>
-            <senti-button id="defangURL" color="#0078D4" text-color="#FFFFFF" text="Defang URL"></senti-button>
+            <senti-button id="defangURL" color="#0078D4" text-color="#FFFFFF" text="Defang URL"
+                tooltip="Defang the URL in your clipboard"></senti-button>
+            <input type="text" id="osintInput" placeholder="Enter IP address or hash..." />
+            <br>
+            <div id="results" class="osint-links"></div>
+            <button id="copyAllBtn" class="copy-btn" style="display: none; margin-top: 10px;">Copy All</button>
         </div>
-        <br>
-        <div id="results"></div>
+
+        <!-- Development Section -->
+        <div id="developmentSection" style="display: none;">
+            <button id="revealBtn">Reveal</button>
+            <input type="text" id="devSearchBox" placeholder="Search by Client..." />
+            <div class="spoiler" id="spoilerContent">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Sentinel Instance</th>
+                            <th>Resource Group</th>
+                            <th>Subscription</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devTableBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
     <script src="popup.js"></script>
     <script src="components/senti-button.js"></script>

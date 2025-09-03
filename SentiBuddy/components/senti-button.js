@@ -24,7 +24,7 @@ class SentiButton extends HTMLElement {
     const text = this.getAttribute('text') || '';
     const icon = this.getAttribute('icon') || '';
     const id = this.getAttribute('id') || '';
-    const tooltip = this.getAttribute('tooltip') || 'Tooltip text';
+    const tooltip = this.getAttribute('tooltip') || '';
     const isActive = this.hasAttribute('active');
 
     this.shadowRoot.innerHTML = `
@@ -35,35 +35,31 @@ class SentiButton extends HTMLElement {
 
         }
         button {
-          background-color: ${backgroundColor};
-          color: ${textColor};
-          border: none;
-          border-radius: ${text ? '20px' : '50%'};
-          padding: ${text ? '10px 20px' : '0'};
-          font-size: 16px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-          outline: none;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: ${text ? 'auto' : '40px'};
-          height: ${text ? 'auto' : '40px'};
-          min-width: ${text ? '200px' : '40px'};
-          min-height: 40px;
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, ${backgroundColor}, ${this.adjustColor(backgroundColor, 50)});
+            color: ${textColor};
+            border: none;
+            border-radius: ${text ? '20px' : '50%'};
+            padding: ${text ? '10px 20px' : '0'};    
+
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(136, 216, 192, 0.3);
+            margin-top: 8px;
         }
+  
         button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-          background-color: ${this.adjustColor(backgroundColor, 20)};
+          transform: translateY(-1px);
+           box-shadow: 0 8px 20px rgba(136, 216, 192, 0.4);
+          background: linear-gradient(135deg, ${this.adjustColor(backgroundColor, 10)}, ${this.adjustColor(backgroundColor, 20)});
         }
         button:active, button[active] {
           transform: translateY(1px);
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-          background-color: ${this.adjustColor(backgroundColor, -20)};
+           box-shadow: 0 8px 20px rgba(136, 216, 192, 0.4);
+          background: linear-gradient(135deg, ${this.adjustColor(backgroundColor, -10)}, ${this.adjustColor(backgroundColor, -20)});
         }
      
         .tooltiptext {
@@ -73,7 +69,7 @@ class SentiButton extends HTMLElement {
           color: #fff;
           text-align: center;
           border-radius: 6px;
-          padding: 100px;
+          padding: 10px;
           position: absolute;
           z-index: 1;
           bottom: 125%; /* Adjust position relative to the button */

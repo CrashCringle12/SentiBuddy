@@ -149,6 +149,7 @@ const saveOptions = () => {
     const ipInfoKey = document.getElementById('ipInfoKey').value.trim();
     const vtkey = document.getElementById('vtkey').value.trim();
     const scamalyticsURL = document.getElementById('scamalyticsURL').value.trim();
+    const configDataURL = document.getElementById('configDataURL').value.trim();
     const toggleExperiments = document.getElementById('toggleExperiments').checked;
 
     chrome.storage.local.set({
@@ -162,7 +163,8 @@ const saveOptions = () => {
         toggleExperiments: toggleExperiments,
         vtkey: vtkey,
         ipInfoKey: ipInfoKey,
-        scamalyticsURL: scamalyticsURL
+        scamalyticsURL: scamalyticsURL,
+        configDataURL: configDataURL
     }, () => {
         const status = document.getElementById('status');
         status.textContent = 'Options saved.';
@@ -184,7 +186,8 @@ function restoreOptions() {
         abuseipdbAPIkey: '',
         vtkey: '',
         ipInfoKey: '',
-        scamalyticsURL: ''
+        scamalyticsURL: '',
+        configDataURL: ''
     }, (items) => {
         document.getElementById('removeFromQueue').checked = items.doRemoveFromFilteredFromQueue;
         document.getElementById('alertOnLatest').checked = items.onlyAlertOnLatest;
@@ -197,6 +200,7 @@ function restoreOptions() {
         document.getElementById('vtkey').value = items.vtkey;
         document.getElementById('ipInfoKey').value = items.ipInfoKey;
         document.getElementById('scamalyticsURL').value = items.scamalyticsURL;
+        document.getElementById('configDataURL').value = items.configDataURL;
     });
 }
 
@@ -211,7 +215,8 @@ function exportOptions() {
         abuseipdbAPIkey: '',
         vtkey: '',
         ipInfoKey: '',
-        scamalyticsURL: ''
+        scamalyticsURL: '',
+        configDataURL: ''
     }, (items) => {
         const jsonData = JSON.stringify(items, null, 4);
         const blob = new Blob([jsonData], { type: "application/json" });

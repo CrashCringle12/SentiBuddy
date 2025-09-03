@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Client Incident Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+
+    .sidebar {
+      width: 300px;
+      background-color: #ffffff;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .client-box {
+      background-color: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .client-info {
+      flex: 1;
+    }
+
+    .client-info h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .client-info p {
+      margin: 2px 0 0 0;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .sparkline {
+      width: 80px;
+      height: 30px;
+    }
+
+    .stats {
+      text-align: right;
+      font-size: 12px;
+    }
+
+    .stats .total {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .main-panel {
+      flex: 1;
+      padding: 20px;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar" id="sidebar">
+    <!-- Client boxes will be inserted here -->
+  </div>
+  <div class="main-panel" id="mainPanel">
+    <h2>Client Overview</h2>
+    <p>Select a client from the left panel to see more details.</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@fnando/sparkline@0.2.0/dist/sparkline.min.js"></script>
+  <script>
+    const dummyClients = [
+      { name: "Client A", workspace: "abc1", trend: [2, 4, 6, 3, 5], incidents: 24, change: 5 },
+      { name: "Client B", workspace: "xyz9", trend: [6, 5, 4, 3, 2], incidents: 17, change: -3 },
+      { name: "Client C", workspace: "lmn2", trend: [1, 3, 4, 6, 8], incidents: 12, change: 8 },
+      { name: "Client D", workspace: "pqr4", trend: [5, 5, 5, 5, 5], incidents: 20, change: 0 },
+    ];
+
+    const sidebar = document.getElementById("sidebar");
+    const mainPanel = document.getElementById("mainPanel");
+
+    function renderClientBox(client, index) {
+      const box = document.createElement("div");
+      box.className = "client-box";
+      box.addEventListener("click", () => selectClient(index));
+
+      const info = document.createElement("div");
+      info.className = "client-info";
+      info.innerHTML = `<h3>${client.name}</h3><p>${client.workspace}</p>`;
+
+      const canvas = document.createElement("canvas");
+      canvas.className = "sparkline";
+
+      const stats = document.createElement("div");
+      stats.className = "stats";
+      stats.innerHTML = `<div class="total">${client.incidents}</div><div>${client.change}%</div>`;
+
+      box.appendChild(info);
+      box.appendChild(canvas);
+      box.appendChild(stats);
+      sidebar.appendChild(box);
+
+      sparkline(canvas, client.trend, {
+        lineColor: client.change >= 0 ? '#28a745' : '#dc3545',
+        fillColor: false
+      });
+    }
+
+    function selectClient(index) {
+      const client = dummyClients[index];
+      mainPanel.innerHTML = `
+        <h2>${client.name} - ${client.workspace}</h2>
+        <p>Total Incidents: ${client.incidents}</p>
+        <p>Daily Change: ${client.change}%</p>
+        <p>Trend Data: ${client.trend.join(', ')}</p>
+      `;
+    }
+
+    dummyClients.forEach((client, index) => renderClientBox(client, index));
+    selectClient(0); // default selection
+  </script>
+</body>
+</html>
