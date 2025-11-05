@@ -212,11 +212,6 @@ function exportOptions() {
         filterOwnerRegexPatterns: [],
         onlyAlertOnLatest: false,
         desktopNotifications: true,
-        abuseipdbAPIkey: '',
-        vtkey: '',
-        ipInfoKey: '',
-        scamalyticsURL: '',
-        configDataURL: ''
     }, (items) => {
         const jsonData = JSON.stringify(items, null, 4);
         const blob = new Blob([jsonData], { type: "application/json" });
