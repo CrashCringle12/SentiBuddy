@@ -450,7 +450,6 @@ function displayReferenceLinks(ip) {
 }
 
 // button selectors
-const notesButton = document.getElementById("openNoteTakingBtn");
 const queueButton = document.querySelector('senti-button#startQueueFiltering');
 const defangUrlButton = document.querySelector('senti-button#defangURL');
 const ipCheckButton = document.querySelector('senti-button#checkIp');
@@ -459,14 +458,6 @@ const notificationButton = document.querySelector('senti-button#notificationTogg
 const settingsButton = document.getElementById("settingsBtn");
 const startQueueButton = document.getElementById('startQueueFiltering');
 document.addEventListener('DOMContentLoaded', () => {
-    // Fetch the value of toggleExperiments from Chrome storage
-    chrome.storage.local.get('toggleExperiments', function(result) {
-        if (result.toggleExperiments) {
-            // If toggleExperiments is true, show the Note Taking button
-            document.getElementById('openNoteTakingBtn').style.display = 'flex';
-        }
-    });
-    
 
     // Check the current state of the queue filtering
     chrome.runtime.sendMessage({ type: 'get-queue-state' }, (response) => {
@@ -487,16 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
             notificationButton.setText('Notifications: Off');
             notificationButton.setColor('#D83B01');
         }
-    });
-
-    // Add event listener for the new button
-    notesButton.addEventListener('click', () => {
-        chrome.windows.create({
-            url: chrome.runtime.getURL("notes_app/index.html"),
-            type: "popup",
-            width: 800,
-            height: 600
-        });
     });
 
 });
