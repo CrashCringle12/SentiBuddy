@@ -34,9 +34,9 @@ function renderTable(filteredData) {
       <td>${row.code}</td>
       <td>${row.client}</td>
       <td>${row.department}</td>
-      <td>${row.description}</td>
-      <td>${row.edr}</td>
-      <td>${row.contact}</td>
+      <td>${row.lead}</td>
+      <td><a href='${row.edrLink}' target='_blank'>${row.edr}</a></td>
+      <td><a href='${row.contact} target='_blank'>Info</a></td>
     `;
     tableBody.appendChild(tr);
   });
@@ -120,7 +120,12 @@ document.getElementById("revealBtn").addEventListener("click", function () {
 
   this.textContent = content.classList.contains("revealed") ? "Hide" : "Reveal";
 });
+document.getElementById("revealBtn2").addEventListener("click", function () {
+  const content = document.getElementById("spoilerContent2");
+  content.classList.toggle("revealed");
 
+  this.textContent = content.classList.contains("revealed") ? "Hide" : "Reveal";
+});
 // Navigation Functions
 document.getElementById("clientBtn").addEventListener("click", () => {
   document.getElementById("clientSection").style.display = "block";
@@ -177,7 +182,7 @@ loadConfigURL()
 
 // OSINT Analysis Functions
 let analysisTimeout;
-
+let lastTypeTime = 0;
 document.getElementById("osintInput").addEventListener("input", () => {
   const input = document.getElementById("osintInput").value.trim();
   const osintResults = document.getElementById("results");
@@ -194,7 +199,7 @@ document.getElementById("osintInput").addEventListener("input", () => {
   if (!isIP || !input) {
     return;
   }
-
+  
   // Show loading state
   osintResults.innerHTML = '<div class="link-block"><span>🔍 Analyzing IP address...</span></div>';
 
@@ -572,7 +577,6 @@ hashCheckButton.addEventListener('click', async () => {
         document.getElementById('results').textContent = 'Failed to access clipboard.';
     }
 });
-
 defangUrlButton.addEventListener('click', async () => {
     setLoading();
     try {
