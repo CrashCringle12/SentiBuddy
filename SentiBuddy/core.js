@@ -44,7 +44,7 @@ function checkWordAgainstPatterns(title, patterns) {
   for (let pattern of patterns) {
     let regex = new RegExp(pattern);
     if (regex.test(title)) {
-      console.log(`{{ ${title} }}: matches pattern: ${pattern}`);
+      // console.log(`{{ ${title} }}: matches pattern: ${pattern}`);
       return true;
     }
   }
@@ -65,13 +65,13 @@ function checkTagsAgainstPatterns(tags, patterns) {
       for (let tag of tagsSplit) {
         //console.log(`Testing ${tag} vs ${pattern}`)
         if (regex.test(tag)) {
-          console.log(`tag ${tag} : matches pattern: ${pattern}`);
+          // console.log(`tag ${tag} : matches pattern: ${pattern}`);
           return true;
         }
       }
     } else {
       if (regex.test(tags)) {
-        console.log(`Tags ${tags}  : matches pattern: ${pattern}`);
+        // console.log(`Tags ${tags}  : matches pattern: ${pattern}`);
         return true;
       }
     }
@@ -121,10 +121,10 @@ var checkAndUpdateIncident = function (client, incID, currentSeverity, owner, st
   if (incident) {
     if (incident.owner != "Assign to me") {
         if (incident.owner != owner) {
-          console.log(incID + " Incident has a new Owner")
+          // console.log(incID + " Incident has a new Owner")
           eventType = owner + " claimed";
         } else if (incident.severity != currentSeverity) {
-          console.log(incID + " Incident ID seen before but severity changed.");
+          // console.log(incID + " Incident ID seen before but severity changed.");
           eventType = incident.severity + " -->";
         } else if (incident.status != status) {
           eventType = "Updated";
@@ -134,7 +134,7 @@ var checkAndUpdateIncident = function (client, incID, currentSeverity, owner, st
     }
   } else {
     // New Incident ID
-    console.log("New Incident ID." + incID);
+    // console.log("New Incident ID." + incID);
     eventType = "New"
   }
 
@@ -175,7 +175,7 @@ var defaultQueue = function () {
       var columnName = header.textContent.trim();
       indexes[columnName] = index;
     });
-    console.log("****************");
+    // console.log("****************");
 
     // Get all rows in the queue
     var rows = document.querySelectorAll(".fxc-gc-row-content.fxc-gc-row-content_0")
@@ -207,7 +207,7 @@ var defaultQueue = function () {
           // Set client to the second element of the array, converted to uppercase
           client = workspaceSplit[1].toUpperCase();
         } else {
-          console.log("Split array does not have two elements.");
+          // console.log("Split array does not have two elements.");
         }
         var eventType = checkAndUpdateIncident(client, incID, severity, owner, status);
         
@@ -215,7 +215,7 @@ var defaultQueue = function () {
         var incMatchesRegex = incMatchesRegex ? incMatchesRegex : checkWordAgainstPatterns(owner, config.filterOwnerRegexPatterns)
         var incMatchesRegex = incMatchesRegex ? incMatchesRegex : checkTagsAgainstPatterns(tags, config.filterTagsRegexPatterns)
         if (incMatchesRegex && doRemoveFromQueue) {
-          console.log("Hiding " + client + " " + incID);
+          // console.log("Hiding " + client + " " + incID);
           row.parentNode.removeChild(row);
         }
         if (!initializing) {
