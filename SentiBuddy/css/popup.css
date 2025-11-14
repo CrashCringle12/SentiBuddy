@@ -239,7 +239,21 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
   }
-
+  #revealBtn2 {
+    display: flex;
+    align-items: center;     /* Vertically center text */
+    justify-content: center; /* Horizontally center text */
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: #64748b;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
   #copyAllBtn:hover {
     background: linear-gradient(135deg, #7dd3fc, #67e8f9);
     box-shadow: 0 8px 20px rgba(136, 216, 192, 0.4);
