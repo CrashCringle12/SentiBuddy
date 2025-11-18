@@ -63,3 +63,17 @@ startCount();
 
 
 console.log("Count added to the page");
+
+startCount();
+
+console.log("Count added to the page");
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'set-timer-count-visible') {
+    if (message.visible) {
+      rootCount.style.display = 'block';
+    } else {
+      rootCount.style.display = 'none';
+    }
+  }
+});

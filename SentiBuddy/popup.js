@@ -24,20 +24,56 @@ function setLoading() {
 
 let devData;
 let data;
+const SAFE_URL_PROTOCOLS = ['https:'];
+
+function sanitizeUrl(url) {
+  if (!url) return '#';
+  try {
+    const parsed = new URL(url, 'https://google.com'); // base in case of relative URLs
+    if (!SAFE_URL_PROTOCOLS.includes(parsed.protocol)) {
+      return '#'; // or return null and skip the link entirely
+    }
+    return parsed.href;
+  } catch (e) {
+    return '#';
+  }
+}
+
+function createTextCell(value) {
+  const td = document.createElement('td');
+  td.textContent = value ?? '';
+  return td;
+}
+
+function createLinkCell(href, text) {
+  const td = document.createElement('td');
+  const safeHref = sanitizeUrl(href);
+
+  const a = document.createElement('a');
+  a.textContent = text ?? 'Link';
+  a.href = safeHref;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+
+  td.appendChild(a);
+  return td;
+}
+
 // Client Info Table Functions
 function renderTable(filteredData) {
   const tableBody = document.getElementById("tableBody");
   tableBody.innerHTML = "";
+
   filteredData.forEach(row => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row.code}</td>
-      <td>${row.client}</td>
-      <td>${row.department}</td>
-      <td>${row.lead}</td>
-      <td><a href='${row.edrLink}' target='_blank'>${row.edr}</a></td>
-      <td><a href='${row.contact} target='_blank'>Info</a></td>
-    `;
+
+    tr.appendChild(createTextCell(row.code));
+    tr.appendChild(createTextCell(row.client));
+    tr.appendChild(createTextCell(row.department));
+    tr.appendChild(createTextCell(row.lead));
+    tr.appendChild(createLinkCell(row.edrLink, row.edr));
+    tr.appendChild(createLinkCell(row.contact, "Info"));
+
     tableBody.appendChild(tr);
   });
 }
@@ -46,15 +82,15 @@ function renderTable(filteredData) {
 function renderDevTable(filteredData) {
   const tableBody = document.getElementById("devTableBody");
   tableBody.innerHTML = "";
+
   filteredData.forEach(row => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${row.client}</td>
-      <td>${row.sentinelInstance}</td>
-      <td>${row.resourceGroup}</td>
-      <td>${row.subscription}</td>
-      <td>${row.location}</td>
-    `;
+
+    tr.appendChild(createTextCell(row.client));
+    tr.appendChild(createLinkCell(row.sentinelLink, row.sentinelName));
+    tr.appendChild(createLinkCell(row.rgLink, row.rgName));
+    tr.appendChild(createLinkCell(row.subscriptionLink, row.subscriptionName));
+    tr.appendChild(createTextCell(row.location));
     tableBody.appendChild(tr);
   });
 }
@@ -73,21 +109,21 @@ async function fetchClientData() {
     const cacheKey = 'cachedConfig';
     const timestampKey = 'cachedConfigTimestamp';
     const now = Date.now();
-    const cacheDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const cacheDuration = 30 * 60 * 1000; // 5 minutes in milliseconds
   
     const cachedData = localStorage.getItem(cacheKey);
     const cachedTimestamp = localStorage.getItem(timestampKey);
   
     if (cachedData && cachedTimestamp && (now - parseInt(cachedTimestamp) < cacheDuration)) {
       // Use cached data
-      devData = JSON.parse(cachedData).clientInfoData.devData;
-      data = JSON.parse(cachedData).clientInfoData.data
+      devData = JSON.parse(cachedData).tableData.devData;
+      data = JSON.parse(cachedData).tableData.data
     } else {
         try {        
           const response = await fetch(configDataURL); // Replace with actual URL
           const result = await response.json();
-          devData = result.clientInfoData.devData;
-          data = result.clientInfoData.data
+          devData = result.tableData.devData;
+          data = result.tableData.data
 
         // Cache result
         localStorage.setItem(cacheKey, JSON.stringify(result));
@@ -180,106 +216,76 @@ window.addEventListener("click", (event) => {
 });
 loadConfigURL()
 
-// OSINT Analysis Functions
-let analysisTimeout;
-let lastTypeTime = 0;
-document.getElementById("osintInput").addEventListener("input", () => {
-  const input = document.getElementById("osintInput").value.trim();
+// OSINT Analysis via Enter key in input box
+document.getElementById("osintInput").addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+
+  const inputEl = event.target;
+  const value = inputEl.value.trim();
   const osintResults = document.getElementById("results");
   const copyAllBtn = document.getElementById("copyAllBtn");
 
-  // Clear previous results and timeout
-  clearTimeout(analysisTimeout);
   osintResults.innerHTML = "";
   copyAllBtn.style.display = "none";
 
-  // Validate IP address
-  const isIP = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(input);
-  
-  if (!isIP || !input) {
+  if (!value) return;
+
+  // Detect IP vs hash
+  const isIPv4 = ipv4Pattern.test(value);
+  const isIPv6 = ipv6Pattern.test(value);
+  const hashType = checkHashType(value); // MD5 / SHA-1 / SHA-256 / Unknown
+
+  if (!(isIPv4 || isIPv6 || hashType !== "Unknown")) {
+    osintResults.innerHTML = `
+      <div class="link-block">
+        <span>⚠️ Please enter a valid IP address or hash, then press Enter.</span>
+      </div>
+    `;
     return;
   }
-  
-  // Show loading state
-  osintResults.innerHTML = '<div class="link-block"><span>🔍 Analyzing IP address...</span></div>';
 
-  // Debounce API calls
-  analysisTimeout = setTimeout(() => {
-    performOSINTAnalysis(input);
-  }, 500);
+  // Show loading state
+  osintResults.innerHTML = `
+    <div class="link-block">
+      <span>🔍 Analyzing ${isIPv4 || isIPv6 ? "IP address" : `${hashType} hash`}...</span>
+    </div>
+  `;
+
+  if (isIPv4 || isIPv6) {
+    // Use your existing IP flow
+    chrome.runtime.sendMessage(
+      { ip: value, type: "search-ip" },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          osintResults.innerHTML = `
+            <div class="link-block">
+              <span>❌ Error: ${chrome.runtime.lastError.message}</span>
+            </div>
+          `;
+        } else {
+          displayResults(response); // existing function
+        }
+      }
+    );
+  } else {
+    // Hash flow
+    chrome.runtime.sendMessage(
+      { hash: value, type: "search-hash" },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          osintResults.innerHTML = `
+            <div class="link-block">
+              <span>❌ Error: ${chrome.runtime.lastError.message}</span>
+            </div>
+          `;
+        } else {
+          displayResults(response); // existing function
+        }
+      }
+    );
+  }
 });
 
-async function performOSINTAnalysis(ip) {
-  const osintResults = document.getElementById("results");
-  const copyAllBtn = document.getElementById("copyAllBtn");
-  
-  const vtApiKey = localStorage.getItem("vtApiKey");
-  const abuseApiKey = localStorage.getItem("abuseApiKey");
-
-  if (!vtApiKey || !abuseApiKey) {
-    osintResults.innerHTML = `
-      <div class="link-block">
-        <span>⚠️ API keys not configured. Please click Settings to add your VirusTotal and AbuseIPDB API keys.</span>
-      </div>
-    `;
-    return;
-  }
-
-  try {
-    console.log('Sending message to background script...');
-    
-    // Check if chrome.runtime is available
-    if (!chrome.runtime || !chrome.runtime.sendMessage) {
-      throw new Error('Chrome runtime not available');
-    }
-    
-    // Use Chrome extension background script for API calls
-    const response = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({
-        action: 'fetchOSINTData',
-        ip: ip,
-        vtApiKey: vtApiKey,
-        abuseApiKey: abuseApiKey
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Chrome runtime error:', chrome.runtime.lastError);
-          reject(new Error(chrome.runtime.lastError.message));
-        } else if (!response) {
-          console.error('No response received from background script');
-          reject(new Error('No response from background script'));
-        } else {
-          console.log('Response received:', response);
-          resolve(response);
-        }
-      });
-    });
-
-    if (!response.success) {
-      throw new Error(response.error);
-    }
-
-    const { vtData, abuseData } = response.data;
-
-    // Extract information
-    const analysisResult = extractAnalysisData(ip, vtData, abuseData);
-    
-    // Display analysis results
-    displayAnalysisResults(analysisResult);
-    
-    // Show reference links and copy all button
-    displayReferenceLinks(ip);
-    copyAllBtn.style.display = "block";
-
-  } catch (error) {
-    console.error("Error fetching OSINT data:", error);
-    osintResults.innerHTML = `
-      <div class="link-block">
-        <span>❌ Error fetching data: ${error.message}</span>
-        <button onclick="location.reload()" style="margin-top: 10px; padding: 5px 10px; background: #ff9a9e; color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
-      </div>
-    `;
-  }
-}
 
 // Helper function to make API requests through Chrome extension
 async function makeApiRequest(url, headers) {
@@ -457,6 +463,8 @@ const hashCheckButton = document.querySelector('senti-button#checkHash');
 const notificationButton = document.querySelector('senti-button#notificationToggle');
 const settingsButton = document.getElementById("settingsBtn");
 const startQueueButton = document.getElementById('startQueueFiltering');
+const timerToggleButton = document.getElementById('toggleTimerCount');
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // Check the current state of the queue filtering
@@ -480,10 +488,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    chrome.storage.local.get({ timerCountVisible: true }, (result) => {
+        const visible = result.timerCountVisible;
+        updateTimerCountButton(visible);
+        updateTimerCountInAllTabs(visible);
+    });
+
 });
 
 document.getElementById('openDashboard').addEventListener('click', () => {
-    console.log("TEST")
     chrome.tabs.create({
       url: chrome.runtime.getURL('dashboard.html') // adjust if the filename is different
     });
@@ -590,6 +603,51 @@ startQueueButton.addEventListener('click', () => {
         }
     });
 });
+
+if (timerToggleButton) {
+    timerToggleButton.addEventListener('click', () => {
+        chrome.storage.local.get({ timerCountVisible: true }, (result) => {
+            const newVisible = !result.timerCountVisible;
+            chrome.storage.local.set({ timerCountVisible: newVisible }, () => {
+                updateTimerCountButton(newVisible);
+                updateTimerCountInAllTabs(newVisible);
+            });
+        });
+    });
+}
+
+
+function updateTimerCountButton(visible) {
+    if (!timerToggleButton) return;
+    if (visible) {
+        timerToggleButton.setText('Timer/Count: On');
+        timerToggleButton.setColor('#107C10');
+    } else {
+        timerToggleButton.setText('Timer/Count: Off');
+        timerToggleButton.setColor('#D83B01');
+    }
+}
+function updateTimerCountInAllTabs(visible) {
+    chrome.tabs.query({}, (tabs) => {
+        if (!tabs || !tabs.length) return;
+
+        tabs.forEach((tab) => {
+            if (!tab.id) return;
+
+            chrome.tabs.sendMessage(
+                tab.id,
+                { type: 'set-timer-count-visible', visible },
+                () => {
+                    // Ignore tabs without our content script
+                    if (chrome.runtime.lastError) {
+                        // console.debug('No receiver in tab', tab.id, chrome.runtime.lastError.message);
+                    }
+                }
+            );
+        });
+    });
+}
+
 
 
 function getScoreClass(score) {

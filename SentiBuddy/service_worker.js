@@ -295,3 +295,29 @@ chrome.notifications.onClicked.addListener(function callback(notificationId) {
   chrome.notifications.clear(notificationId);
   window.focus();
 });
+
+// chrome.webRequest.onBeforeSendHeaders.addListener(
+//   function(details) {
+//       console.log(details)
+//     if (details.url.contains("top=50")) {
+//       let url = details.url
+//       console.log(details)
+//       console.log(url)
+//       console.log(details)
+//       return {redirectUrl: url};
+//     }
+//     console.log(details)
+//     return {};
+//   },
+//   {urls: ["*://management.azure.com/*"]},
+//   ["requestHeaders", "extraHeaders"]
+// );
+
+// chrome.webRequest.onBeforeRequest.addListener(
+//   function(details) {
+//     console.log(details)
+//     return {cancel: details.url.indexOf("://www.evil.com/") != -1};
+//   },
+//   {urls: ["<all_urls>"]},
+//   ["blocking"]
+// );
