@@ -68,6 +68,10 @@ startCount();
 
 console.log("Count added to the page");
 
+chrome.storage.local.get({ timerCountVisible: true }, (result) => {
+  rootCount.style.display = result.timerCountVisible ? 'block' : 'none';
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'set-timer-count-visible') {
     if (message.visible) {

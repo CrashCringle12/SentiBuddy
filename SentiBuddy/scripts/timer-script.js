@@ -65,6 +65,10 @@ root.addEventListener("click", () => {
 updateDisplay();
 console.log("Timer added to the page");
 
+chrome.storage.local.get({ timerCountVisible: true }, (result) => {
+  root.style.display = result.timerCountVisible ? 'block' : 'none';
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'set-timer-count-visible') {
     if (message.visible) {
