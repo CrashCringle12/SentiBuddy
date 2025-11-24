@@ -162,15 +162,19 @@ const DEFAULT_CONFIG = {
 };
 
 const allowedHosts = [
-  "sharepoint.com",
-  "azure.com",
-  "scamalytics.com"
+  ".sharepoint.com",
+  ".azure.com",
+  ".scamalytics.com"
 ];
+
+function hostMatches(u, allowed) {
+    return u.hostname === allowed || u.hostname.endsWith("." + allowed);
+}
 
 function sanitizeUrl(url) {
   try {
     const u = new URL(url);
-    if (allowedHosts.includes(u.hostname) && ["https:"].includes(u.protocol)) {
+    if (allowedHosts.some(allowed => hostMatches(u, allowed)) &&  u.protocol === "https:") {
         return url;
     } else {
         return '';
