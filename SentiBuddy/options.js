@@ -162,9 +162,9 @@ const DEFAULT_CONFIG = {
 };
 
 const allowedHosts = [
-  ".sharepoint.com",
-  ".azure.com",
-  ".scamalytics.com"
+  "sharepoint.com",
+  "azure.com",
+  "scamalytics.com"
 ];
 
 function hostMatches(u, allowed) {
