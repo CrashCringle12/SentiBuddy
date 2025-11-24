@@ -144,6 +144,7 @@ document.getElementById("searchBox").addEventListener("input", function () {
   renderTable(filtered);
 });
 
+
 document.getElementById("devSearchBox").addEventListener("input", function () {
   const query = this.value.toLowerCase();
   const filtered = devData.filter(item => item.client.toLowerCase().includes(query));
@@ -162,6 +163,40 @@ document.getElementById("revealBtn2").addEventListener("click", function () {
 
   this.textContent = content.classList.contains("revealed") ? "Hide" : "Reveal";
 });
+
+document.getElementById("searchBox").addEventListener("keydown", function (event) {
+    if (event.key !== "Enter") return;
+
+    const spoiler = document.getElementById("spoilerContent");
+
+    if (event.shiftKey) {
+        return;
+    }
+
+    spoiler.classList.add("revealed");
+
+    const btn = document.getElementById("revealBtn");
+    btn.textContent = "Hide";
+});
+
+
+
+document.getElementById("devSearchBox").addEventListener("keydown", function (event) {
+    if (event.key !== "Enter") return;
+
+    const spoiler = document.getElementById("spoilerContent2");
+
+    if (event.shiftKey) {
+        return;
+    }
+
+    spoiler.classList.add("revealed");
+
+    const btn = document.getElementById("revealBtn2");
+    btn.textContent = "Hide";
+});
+
+
 // Navigation Functions
 document.getElementById("clientBtn").addEventListener("click", () => {
   document.getElementById("clientSection").style.display = "block";
