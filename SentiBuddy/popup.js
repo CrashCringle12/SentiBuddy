@@ -196,51 +196,57 @@ document.getElementById("devSearchBox").addEventListener("keydown", function (ev
     btn.textContent = "Hide";
 });
 
+function showTab(tab) {
+  const sections = {
+    client: "clientSection",
+    osint: "osintSection",
+    queue: "queueSection",
+    development: "developmentSection"
+  };
+
+  const buttons = {
+    client: "clientBtn",
+    osint: "osintBtn",
+    queue: "queueBtn",
+    development: "developmentBtn"
+  };
+
+  Object.keys(sections).forEach(key => {
+    const sectionEl = document.getElementById(sections[key]);
+    if (sectionEl) {
+      sectionEl.style.display = key === tab ? "block" : "none";
+    }
+  });
+
+  Object.keys(buttons).forEach(key => {
+    const btnEl = document.getElementById(buttons[key]);
+    if (btnEl) {
+      btnEl.classList.toggle("active", key === tab);
+    }
+  });
+
+  chrome.storage.local.set({ lastPopupTab: tab });
+}
+
 
 // Navigation Functions
 document.getElementById("clientBtn").addEventListener("click", () => {
-  document.getElementById("clientSection").style.display = "block";
-  document.getElementById("osintSection").style.display = "none";
-    document.getElementById("queueSection").style.display = "none";
-  document.getElementById("developmentSection").style.display = "none";
-  document.getElementById("clientBtn").classList.add("active");
-  document.getElementById("osintBtn").classList.remove("active");
-  document.getElementById("developmentBtn").classList.remove("active");
-    document.getElementById("queueBtn").classList.remove("active");
+  showTab("client");
 });
 
 document.getElementById("osintBtn").addEventListener("click", () => {
-  document.getElementById("clientSection").style.display = "none";
-  document.getElementById("osintSection").style.display = "block";
-    document.getElementById("queueSection").style.display = "none";
-  document.getElementById("developmentSection").style.display = "none";
-  document.getElementById("osintBtn").classList.add("active");
-  document.getElementById("clientBtn").classList.remove("active");
-  document.getElementById("developmentBtn").classList.remove("active");
-    document.getElementById("queueBtn").classList.remove("active");
+  showTab("osint");
 });
 
 document.getElementById("developmentBtn").addEventListener("click", () => {
-  document.getElementById("clientSection").style.display = "none";
-  document.getElementById("osintSection").style.display = "none";
-  document.getElementById("queueSection").style.display = "none";
-  document.getElementById("developmentSection").style.display = "block";
-  document.getElementById("developmentBtn").classList.add("active");
-  document.getElementById("queueBtn").classList.remove("active");
-  document.getElementById("clientBtn").classList.remove("active");
-  document.getElementById("osintBtn").classList.remove("active");
-});// Updated data with placeholder hyperlinks for EDR and a new Contacts field
+  showTab("development");
+});
 
 document.getElementById("queueBtn").addEventListener("click", () => {
-      document.getElementById("queueSection").style.display = "block";
-  document.getElementById("clientSection").style.display = "none";
-  document.getElementById("osintSection").style.display = "none";
-  document.getElementById("developmentSection").style.display = "none";
-  document.getElementById("developmentBtn").classList.remove("active");
-  document.getElementById("queueBtn").classList.add("active");
-  document.getElementById("clientBtn").classList.remove("active");
-  document.getElementById("osintBtn").classList.remove("active");
+  showTab("queue");
 });
+
+
 
 // Close modal when clicking outside of it
 window.addEventListener("click", (event) => {
@@ -502,6 +508,10 @@ const timerToggleButton = document.getElementById('toggleTimerCount');
 
 document.addEventListener('DOMContentLoaded', () => {
 
+   chrome.storage.local.get({ lastPopupTab: 'client' }, (result) => {
+        showTab(result.lastPopupTab);
+    });
+    
     // Check the current state of the queue filtering
     chrome.runtime.sendMessage({ type: 'get-queue-state' }, (response) => {
         if (response.active) {
