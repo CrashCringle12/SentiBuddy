@@ -100,6 +100,13 @@ var highlightFunc = function (e) {
   prevDOM = srcElement;
 }
 
+function setSelectAllVisibility(visible) {
+  const selectAll = document.querySelector('[aria-label="Select all items"]');
+  if (selectAll) {
+    console.log('Removings ' + visible)
+    selectAll.style.display = visible ? '' : 'none';
+  }
+}
 
 // getTargetParents stores the selected element hierarchy
 // so it can be compared later to highlight the last existing
@@ -315,8 +322,12 @@ var defaultQueue = function () {
           chrome.runtime.sendMessage(message);
         });
       } else {
-        console.log("Do not update")
+        // console.log("Do not update")
       }
+    }
+
+    if (enabled) {
+      setSelectAllVisibility(false);
     }
     
   });
@@ -375,6 +386,10 @@ chrome.runtime.onMessage.addListener(function (request) {
         type: 'set-queue-state',
         active: false
       })
+      
+      // Show "Select all items" again when queue filtering is turned off
+      setSelectAllVisibility(true);
+
     }
     if (enabled) {
       removeListeners();
@@ -476,6 +491,11 @@ chrome.runtime.onMessage.addListener(function (request) {
           }
 
         });
+
+        
+        // Hide "Select all items" when queue filtering is enabled
+        setSelectAllVisibility(false);
+
       // console.log(incidents)
         // Disconnect the observer temporarily so we can set the class name
         // to avoid triggering and endless loop.
