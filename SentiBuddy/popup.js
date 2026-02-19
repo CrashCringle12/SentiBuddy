@@ -197,16 +197,18 @@ document.getElementById("devSearchBox").addEventListener("keydown", function (ev
 });
 
 function showTab(tab) {
+  if (tab === "osint") {
+    tab = "queue";
+  }
+
   const sections = {
     client: "clientSection",
-    osint: "osintSection",
     queue: "queueSection",
     development: "developmentSection"
   };
 
   const buttons = {
     client: "clientBtn",
-    osint: "osintBtn",
     queue: "queueBtn",
     development: "developmentBtn"
   };
@@ -232,10 +234,6 @@ function showTab(tab) {
 // Navigation Functions
 document.getElementById("clientBtn").addEventListener("click", () => {
   showTab("client");
-});
-
-document.getElementById("osintBtn").addEventListener("click", () => {
-  showTab("osint");
 });
 
 document.getElementById("developmentBtn").addEventListener("click", () => {

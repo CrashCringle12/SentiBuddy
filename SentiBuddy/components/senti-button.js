@@ -9,7 +9,7 @@ class SentiButton extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['color', 'text-color', 'text', 'active', 'icon', 'tooltip'];
+    return ['color', 'text-color', 'text', 'active', 'icon', 'tooltip', 'size'];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -25,7 +25,16 @@ class SentiButton extends HTMLElement {
     const icon = this.getAttribute('icon') || '';
     const id = this.getAttribute('id') || '';
     const tooltip = this.getAttribute('tooltip') || '';
+    const size = this.getAttribute('size') || 'md';
+    const isSmall = size === 'sm';
     const isActive = this.hasAttribute('active');
+
+    const fontSize = isSmall ? '12px' : '14px';
+    const iconSize = isSmall ? '16px' : '20px';
+    const verticalPadding = isSmall ? '6px' : '10px';
+    const horizontalPadding = isSmall ? '10px' : '20px';
+    const borderRadius = text ? (isSmall ? '14px' : '20px') : '50%';
+    const buttonMarginTop = isSmall ? '2px' : '8px';
 
     this.shadowRoot.innerHTML = `
       <style>
@@ -36,19 +45,22 @@ class SentiButton extends HTMLElement {
         }
         button {
             width: 100%;
-            padding: 14px;
             background: linear-gradient(135deg, ${backgroundColor}, ${this.adjustColor(backgroundColor, 50)});
             color: ${textColor};
             border: none;
-            border-radius: ${text ? '20px' : '50%'};
-            padding: ${text ? '10px 20px' : '0'};    
+          border-radius: ${borderRadius};
+          padding: ${text ? `${verticalPadding} ${horizontalPadding}` : '0'};
 
             cursor: pointer;
             font-weight: 600;
-            font-size: 14px;
+          font-size: ${fontSize};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: ${text ? '6px' : '0'};
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 12px rgba(136, 216, 192, 0.3);
-            margin-top: 8px;
+          margin-top: ${buttonMarginTop};
         }
   
         button:hover {
@@ -96,9 +108,9 @@ class SentiButton extends HTMLElement {
         }
 
         .icon {
-          font-size: 24px;
-          margin-right: ${text ? '8px' : '0'};
-          display: flex;
+          font-size: ${iconSize};
+          margin-right: 0;
+          display: inline-flex;
           align-items: center;
           justify-content: center;
         }
