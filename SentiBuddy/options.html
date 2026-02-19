@@ -29,12 +29,22 @@
                 <div id="status" aria-live="polite"></div>
             </section>
 
-            <section class="card">
+            <section class="card remote-config">
                 <h2>Remote Configuration</h2>
                 <label class="field-label" for="configDataURL">Config Link</label>
-                <div class="inline-field">
+                <div class="inline-field remote-inline">
                     <input type="text" id="configDataURL" />
                     <button type="button" id="useConfigFromUrl" class="button">Pull</button>
+                </div>
+
+                <label class="field-label" for="dashboardTitle">Dashboard Button Title</label>
+                <div class="inline-field remote-inline">
+                    <input type="text" id="dashboardTitle" placeholder="Example: Security Dashboard" />
+                </div>
+
+                <label class="field-label" for="dashboardLink">Dashboard Destination URL</label>
+                <div class="inline-field remote-inline">
+                    <input type="text" id="dashboardLink" placeholder="https://..." />
                 </div>
             </section>
 

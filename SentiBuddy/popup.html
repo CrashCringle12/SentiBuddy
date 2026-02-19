@@ -30,23 +30,24 @@
         <div id="queueSection" class="section-card" style="display: none;">
             <div id="grouping">
                 <senti-button id="openDashboard" color="#0078D4" text-color="#FFFFFF" icon="\1F4CA" size="sm"
-                    text="Open Dashboard"></senti-button>
+                    text="Open Dashboard" tooltip="Open the Dashboard"></senti-button>
                 <senti-button id="notificationToggle" color="#D83B01" text-color="#FFFFFF" icon="\1F514" size="sm"
-                    text="Notifications: Off"></senti-button>
+                    text="Notifications: Off" tooltip="Toggle Desktop Notifications"></senti-button>
                 <senti-button id="startQueueFiltering" color="#D83B01" text-color="#FFFFFF" icon="\23F3" size="sm"
-                    text="Queue Filter: Off"></senti-button>
+                    text="Queue Filter: Off" tooltip="Toggle Queue Filtering"></senti-button>
                 <senti-button id="toggleTimerCount" color="#D83B01" text-color="#FFFFFF" icon="\23F2" size="sm"
-                    text="Timer/Count: Off"></senti-button>
+                    text="Timer/Count: Off" tooltip="Toggle Timer/Count Display"></senti-button>
             </div>
 
             <div id="osintSection" class="embedded-tools">
                 <h2 class="section-subtitle">Tools</h2>
                 <div class="tools-grid">
                     <senti-button id="checkIp" color="#0078D4" text-color="#FFFFFF" icon="\1F50D" size="sm" text="Check IP"
-                        tooltip="Check an IP address for reputation"></senti-button>
-                    <senti-button id="checkHash" color="#0078D4" text-color="#FFFFFF" icon="\1F512" size="sm" text="Check Hash"></senti-button>
+                        tooltip="Run OSINT on IP Address in clipboard"></senti-button>
+                    <senti-button id="checkHash" color="#0078D4" text-color="#FFFFFF" icon="\1F512" size="sm" text="Check Hash"
+                        tooltip="Run OSINT on Hash in clipboard"></senti-button>
                     <senti-button id="defangURL" color="#0078D4" text-color="#FFFFFF" icon="\1F517" size="sm" text="Defang URL"
-                        tooltip="Defang the URL in your clipboard"></senti-button>
+                        tooltip="Attempt to Defang the URL in your clipboard"></senti-button>
                 </div>
                 <input type="text" id="osintInput" placeholder="Enter IP address or hash..." />
                 <div id="results" class="osint-links"></div>

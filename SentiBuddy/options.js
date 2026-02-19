@@ -34,7 +34,9 @@ const FIELD_KEY_TO_ID = {
     vtkey: 'vtkey',
     ipInfoKey: 'ipInfoKey',
     scamalyticsURL: 'scamalyticsURL',
-    configDataURL: 'configDataURL'
+    configDataURL: 'configDataURL',
+    dashboardTitle: 'dashboardTitle',
+    dashboardLink: 'dashboardLink'
 };
 
 const FIELD_IDS = Object.values(FIELD_KEY_TO_ID);
@@ -163,6 +165,8 @@ const DEFAULT_CONFIG = {
     ipInfoKey: '',
     scamalyticsURL: '',
     configDataURL: '',
+    dashboardTitle: 'Open Dashboard',
+    dashboardLink: '',
     // URL-lock metadata
     urlFieldLocks: [],
     urlFilterTitlePatterns: [],
@@ -195,6 +199,15 @@ function sanitizeUrl(url) {
   }
 }
 
+function sanitizeHttpsUrl(url) {
+    try {
+        const u = new URL(url);
+        return u.protocol === 'https:' ? u.href : '';
+    } catch {
+        return '';
+    }
+}
+
 
 const saveOptions = () => {
     const removeFromQueue = document.getElementById('removeFromQueue').checked;
@@ -206,6 +219,8 @@ const saveOptions = () => {
     const vtkey = document.getElementById('vtkey').value.trim().replace(/[<>]/g, '');
     const scamalyticsURL = sanitizeUrl(document.getElementById('scamalyticsURL').value.trim()).replace(/[<>]/g, '');
     const configDataURL = sanitizeUrl(document.getElementById('configDataURL').value.trim()).replace(/[<>]/g, '');
+    const dashboardTitle = document.getElementById('dashboardTitle').value.trim().replace(/[<>]/g, '');
+    const dashboardLink = sanitizeHttpsUrl(document.getElementById('dashboardLink').value.trim()).replace(/[<>]/g, '');
 
     // Pattern rows with locked metadata
     const titleRows = Array.from(document.querySelectorAll('#titlePatterns .pattern-row'));
@@ -261,6 +276,8 @@ const saveOptions = () => {
         ipInfoKey: ipInfoKey,
         scamalyticsURL: scamalyticsURL,
         configDataURL: configDataURL,
+        dashboardTitle: dashboardTitle || 'Open Dashboard',
+        dashboardLink: dashboardLink,
         urlFieldLocks: urlFieldLocks,
         urlFilterTitlePatterns: urlFilterTitlePatterns,
         urlFilterTagsPatterns: urlFilterTagsPatterns,
@@ -286,6 +303,8 @@ function restoreOptions() {
         document.getElementById('ipInfoKey').value = items.ipInfoKey;
         document.getElementById('scamalyticsURL').value = items.scamalyticsURL;
         document.getElementById('configDataURL').value = items.configDataURL;
+        document.getElementById('dashboardTitle').value = items.dashboardTitle;
+        document.getElementById('dashboardLink').value = items.dashboardLink;
 
         // Apply field locks
         const lockedFields = new Set(items.urlFieldLocks || []);

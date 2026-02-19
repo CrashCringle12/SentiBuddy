@@ -504,6 +504,33 @@ const settingsButton = document.getElementById("settingsBtn");
 const themeToggleButton = document.getElementById('themeToggleBtn');
 const startQueueButton = document.getElementById('startQueueFiltering');
 const timerToggleButton = document.getElementById('toggleTimerCount');
+const openDashboardButton = document.getElementById('openDashboard');
+
+let dashboardConfig = {
+  dashboardTitle: 'Open Dashboard',
+  dashboardLink: ''
+};
+
+function sanitizeHttpsUrl(url) {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' ? parsed.href : '';
+  } catch {
+    return '';
+  }
+}
+
+function updateDashboardButtonUI() {
+  if (!openDashboardButton) return;
+
+  const buttonTitle = (dashboardConfig.dashboardTitle || 'Open Dashboard').trim();
+  const destination = sanitizeHttpsUrl(dashboardConfig.dashboardLink);
+  const tooltipText = destination ? `Open: ${buttonTitle}` : `${buttonTitle} (URL not configured)`;
+
+  openDashboardButton.setText(buttonTitle);
+  openDashboardButton.setAttribute('tooltip', tooltipText);
+}
 
 function applyPopupTheme(theme) {
   const activeTheme = theme === 'dark' ? 'dark' : 'light';
@@ -552,6 +579,14 @@ document.addEventListener('DOMContentLoaded', () => {
     applyPopupTheme(result.popupTheme);
     });
 
+  chrome.storage.local.get({ dashboardTitle: 'Open Dashboard', dashboardLink: '' }, (result) => {
+    dashboardConfig = {
+      dashboardTitle: result.dashboardTitle,
+      dashboardLink: result.dashboardLink
+    };
+    updateDashboardButtonUI();
+  });
+
 });
 
 if (themeToggleButton) {
@@ -564,8 +599,14 @@ if (themeToggleButton) {
 }
 
 document.getElementById('openDashboard').addEventListener('click', () => {
+  const destination = sanitizeHttpsUrl(dashboardConfig.dashboardLink);
+  if (!destination) {
+    document.getElementById('results').textContent = 'Dashboard URL is not configured in Options.';
+    return;
+  }
+
     chrome.tabs.create({
-      url: chrome.runtime.getURL('dashboard.html') // adjust if the filename is different
+      url: destination
     });
   });
   

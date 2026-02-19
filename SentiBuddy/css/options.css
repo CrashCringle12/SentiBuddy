@@ -188,6 +188,35 @@ input[type="password"]:focus {
   flex-shrink: 0;
 }
 
+.remote-config .field-label {
+    margin: 8px 0 4px;
+    font-size: 12px;
+}
+
+.remote-inline {
+    gap: 6px;
+}
+
+.remote-inline input[type="text"] {
+    flex: 1;
+    min-height: 32px;
+    padding: 7px 9px;
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+.remote-inline .button {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.remote-inline .lock-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+}
 .toggle-row {
   display: grid;
   grid-template-columns: 1fr auto auto;
