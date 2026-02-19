@@ -11,6 +11,17 @@ function openTab(evt, tabName) {
     evt.currentTarget.className += " active";
 }
 
+function applyOptionsTheme(theme) {
+    const activeTheme = theme === 'dark' ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', activeTheme);
+
+    const themeToggle = document.getElementById('optionsThemeToggle');
+    if (themeToggle) {
+        themeToggle.textContent = activeTheme === 'dark' ? '☀️ Theme' : '🌙 Theme';
+        themeToggle.title = activeTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    }
+}
+
 // --- Helpers for URL-based locks -----------------------------------------
 
 // Map config keys -> DOM field IDs
@@ -607,5 +618,19 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const useBtn = document.getElementById('useConfigFromUrl');
     if (useBtn) {
         useBtn.addEventListener('click', handleUseConfigFromUrl);
+    }
+
+    chrome.storage.local.get({ popupTheme: 'light' }, (result) => {
+        applyOptionsTheme(result.popupTheme);
+    });
+
+    const themeToggle = document.getElementById('optionsThemeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyOptionsTheme(nextTheme);
+            chrome.storage.local.set({ popupTheme: nextTheme });
+        });
     }
 });

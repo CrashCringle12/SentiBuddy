@@ -3,280 +3,97 @@
 
 <head>
     <meta charset="UTF-8">
-
     <title>SentiBuddy</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-
-        .pattern-row {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 4px;
-        }
-
-        .pattern-row input {
-            flex: 1;
-        }
-
-        .lock-btn {
-            margin-left: 4px;
-            padding: 0 6px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .lock-btn[data-locked="true"] {
-            opacity: 0.7;
-        }
-
-        /* label {
-            font-weight: bold; 
-        } */
-        /* .button {
-            padding: 4px 8px;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        } */
-        #save,
-        #saveNoteTaking {
-            color: #fff;
-            background-color: #007bff;
-        }
-
-        #save:hover,
-        #saveNoteTaking:hover {
-            background-color: #0056b3;
-        }
-
-        #export,
-        #import,
-        #exportNoteTaking,
-        #importNoteTaking {
-            color: #fff;
-            /* White text for visibility */
-            background-color: #555;
-            /* Darker background for buttons */
-            margin-left: 5px;
-        }
-
-        #export:hover,
-        #import:hover,
-        #exportNoteTaking:hover,
-        #importNoteTaking:hover {
-            background-color: #333;
-            /* Even darker on hover */
-        }
-
-        #status {
-            margin-top: 10px;
-            color: #28a745;
-        }
-
-        .tab {
-            overflow: hidden;
-            border-bottom: 1px solid #ccc;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .tab button {
-            background-color: inherit;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-
-        .tab button:hover {
-            background-color: #ddd;
-        }
-
-        .tab button.active {
-            background-color: #ccc;
-        }
-
-        .tabcontent {
-            display: none;
-            padding: 20px 0;
-        }
-
-        .tabcontent.active {
-            display: block;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            padding-top: 60px;
-        }
-
-        .modal-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            margin: 5% auto;
-            padding: 32px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 360px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .modal-content::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #ff9a9e, #fecfef, #fecfef, #a8e6cf, #88d8c0);
-            border-radius: 24px 24px 0 0;
-        }
-
-        .modal-content h3 {
-            margin-bottom: 24px;
-            color: #2d3748;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .modal-content label {
-            display: block;
-            margin-bottom: 4px;
-            /* margin-top: 16px; */
-            color: #4a5568;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .modal-content input[type="text"] {
-            margin-bottom: 1px;
-        }
-
-        .button {
-            padding: 4px 8px;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            background: linear-gradient(135deg, hsl(229, 100%, 68%), #4134ff);
-            color: white;
-            border: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 12px rgba(124, 144, 255, 0.3);
-            margin-top: 8px;
-        }
-
-        #tablinks {
-            padding: 4px 8px;
-            border: none;
-            border-radius: 2px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .button:hover {
-            background: linear-gradient(135deg, #4134ff, hsl(229, 100%, 68%));
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(136, 216, 192, 0.4);
-        }
-    </style>
+    <link rel="stylesheet" href="css/options.css">
 </head>
 
 <body>
-    <h1>Extension Configuration</h1>
-    <div class="tab">
-        <button id="generalOptionsTab" class="tablinks">General Options</button>
-    </div>
-    <div id="GeneralOptions" class="tabcontent">
-        <div class="modal-content">
+    <div class="page-shell">
+        <header class="page-header">
+            <div>
+                <h1>Extension Configuration</h1>
+                <p>Manage queue behavior, notifications, integrations, and filters.</p>
+            </div>
+            <button id="optionsThemeToggle" class="button ghost" type="button" title="Toggle dark mode">🌙 Theme</button>
+        </header>
 
-            <button id="save" class="button">Save Config</button>
-            <button id="export" class="button">Export Config</button>
-            <button id="import" class="button">Import Config</button>
-            <div id="status"></div>
-            <br>
-            <label>
-                Config Link:
-                <input type="text" id="configDataURL" />
-                <button type="button" id="useConfigFromUrl" class="button">Pull</button>
-            </label>
-            <label>
-                Remove Matches From Queue:
-                <input type="checkbox" id="removeFromQueue" />
-            </label>
-            <br>
-            <label>
-                Enable Desktop Notifications:
-                <input type="checkbox" id="desktopNotifications" />
-            </label>
-            <br>
-            <label>
-                Only Notify On Latest:
-                <input type="checkbox" id="alertOnLatest" />
-            </label>
-            <br>
-            <label>
-                Show Experimental Features:
-                <input type="checkbox" id="toggleExperiments" />
-            </label>
-            <br>
-            <label>
-                AbuseIPDB API Key:
+        <div class="tab">
+            <button id="generalOptionsTab" class="tablinks">General Options</button>
+        </div>
+
+        <div id="GeneralOptions" class="tabcontent">
+            <section class="card actions-card">
+                <button id="save" class="button" title="Save configuration">💾 Save</button>
+                <button id="export" class="button secondary" title="Export configuration">⤴ Export</button>
+                <button id="import" class="button secondary" title="Import configuration">⤵ Import</button>
+                <div id="status" aria-live="polite"></div>
+            </section>
+
+            <section class="card">
+                <h2>Remote Configuration</h2>
+                <label class="field-label" for="configDataURL">Config Link</label>
+                <div class="inline-field">
+                    <input type="text" id="configDataURL" />
+                    <button type="button" id="useConfigFromUrl" class="button">Pull</button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>Behavior</h2>
+                <label class="toggle-row" for="removeFromQueue">
+                    <span>Remove Matches From Queue</span>
+                    <input type="checkbox" id="removeFromQueue" />
+                </label>
+                <label class="toggle-row" for="desktopNotifications">
+                    <span>Enable Desktop Notifications</span>
+                    <input type="checkbox" id="desktopNotifications" />
+                </label>
+                <label class="toggle-row" for="alertOnLatest">
+                    <span>Only Notify On Latest</span>
+                    <input type="checkbox" id="alertOnLatest" />
+                </label>
+                <label class="toggle-row" for="toggleExperiments">
+                    <span>Show Experimental Features</span>
+                    <input type="checkbox" id="toggleExperiments" />
+                </label>
+            </section>
+
+            <section class="card">
+                <h2>Integration Keys</h2>
+                <label class="field-label" for="abuseipdbAPIkey">AbuseIPDB API Key</label>
                 <input type="password" id="abuseipdbAPIkey" autocomplete="off">
-            </label>
-            <br>
-            <label>
-                VirusTotal API Key:
+
+                <label class="field-label" for="vtkey">VirusTotal API Key</label>
                 <input type="password" id="vtkey" autocomplete="off">
-            </label>
-            <br>
-            <label>
-                IPInfo API Key:
+
+                <label class="field-label" for="ipInfoKey">IPInfo API Key</label>
                 <input type="password" id="ipInfoKey" autocomplete="off">
-            </label>
 
-            <br>
-            <label>
-                Scamalytics URL:
+                <label class="field-label" for="scamalyticsURL">Scamalytics URL</label>
                 <input type="password" id="scamalyticsURL" autocomplete="off">
-            </label>
+            </section>
 
+            <section class="card">
+                <h2>Regex Filters</h2>
 
+                <div class="pattern-group">
+                    <label class="field-label"><b>Filter Title Regex Patterns</b></label>
+                    <div id="titlePatterns"></div>
+                    <button type="button" id="addTitlePattern" class="button secondary">Add Pattern</button>
+                </div>
 
-            <br>
+                <div class="pattern-group">
+                    <label class="field-label"><b>Filter Tags Regex Patterns</b></label>
+                    <div id="tagPatterns"></div>
+                    <button type="button" id="addTagPattern" class="button secondary">Add Pattern</button>
+                </div>
 
-            <br>
-            <br>
-            <label><b>Filter Title Regex Patterns:</b></label>
-            <div id="titlePatterns"></div>
-            <button type="button" id="addTitlePattern">Add Pattern</button>
-            <br>
-            <br>
-            <label><b>Filter Tags Regex Patterns:</b></label>
-            <div id="tagPatterns"></div>
-            <button type="button" id="addTagPattern">Add Pattern</button>
-            <br>
-            <br>
-            <label><b>Filter Owner Regex Patterns:</b></label>
-            <div id="ownerPatterns"></div>
-            <button type="button" id="addOwnerPattern">Add Pattern</button>
+                <div class="pattern-group">
+                    <label class="field-label"><b>Filter Owner Regex Patterns</b></label>
+                    <div id="ownerPatterns"></div>
+                    <button type="button" id="addOwnerPattern" class="button secondary">Add Pattern</button>
+                </div>
+            </section>
         </div>
     </div>
     <script src="options.js"></script>
