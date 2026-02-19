@@ -503,8 +503,19 @@ const ipCheckButton = document.querySelector('senti-button#checkIp');
 const hashCheckButton = document.querySelector('senti-button#checkHash');
 const notificationButton = document.querySelector('senti-button#notificationToggle');
 const settingsButton = document.getElementById("settingsBtn");
+const themeToggleButton = document.getElementById('themeToggleBtn');
 const startQueueButton = document.getElementById('startQueueFiltering');
 const timerToggleButton = document.getElementById('toggleTimerCount');
+
+function applyPopupTheme(theme) {
+  const activeTheme = theme === 'dark' ? 'dark' : 'light';
+  document.body.setAttribute('data-theme', activeTheme);
+
+  if (themeToggleButton) {
+    themeToggleButton.textContent = activeTheme === 'dark' ? '☀️' : '🌙';
+    themeToggleButton.title = activeTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -539,7 +550,20 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTimerCountInAllTabs(visible);
     });
 
+  chrome.storage.local.get({ popupTheme: 'light' }, (result) => {
+    applyPopupTheme(result.popupTheme);
+    });
+
 });
+
+if (themeToggleButton) {
+  themeToggleButton.addEventListener('click', () => {
+    const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyPopupTheme(nextTheme);
+    chrome.storage.local.set({ popupTheme: nextTheme });
+  });
+}
 
 document.getElementById('openDashboard').addEventListener('click', () => {
     chrome.tabs.create({

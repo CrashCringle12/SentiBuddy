@@ -9,14 +9,23 @@
 
 <body>
     <div class="container">
+        <div class="header-row">
+            <div class="brand">
+                <h1>SentiBuddy</h1>
+                <p>Queue, Client, Development, and OSINT tools in one place</p>
+            </div>
+        </div>
+
         <div class="nav">
             <button id="queueBtn">Queue</button>
-            <button id="clientBtn"  class="active">Client Info</button>
+            <button id="clientBtn" class="active">Client Info</button>
             <button id="developmentBtn">Development</button>
             <button id="osintBtn">Tools</button>
-            <button id="settingsBtn">⚙️</button>
+            <button id="themeToggleBtn" title="Toggle dark mode">🌙</button>
+            <button id="settingsBtn" title="Open settings">⚙️</button>
         </div>
-        <div id="queueSection" style="display: none;">
+
+        <div id="queueSection" class="section-card" style="display: none;">
             <div id="grouping">
                 <senti-button id="openDashboard" color="#0078D4" text-color="#FFFFFF"
                     text="Open Dashboard"></senti-button>
@@ -24,15 +33,12 @@
                     text="Notifications: Off"></senti-button>
                 <senti-button id="startQueueFiltering" color="#D83B01" text-color="#FFFFFF"
                     text="Queue Filter: Off"></senti-button>
-
                 <senti-button id="toggleTimerCount" color="#D83B01" text-color="#FFFFFF"
                     text="Timer/Count: Off"></senti-button>
             </div>
         </div>
 
-
-        <!-- Client Info Section -->
-        <div id="clientSection">
+        <div id="clientSection" class="section-card">
             <button id="revealBtn">Reveal</button>
             <input type="text" id="searchBox" placeholder="Search by Code..." />
             <div class="spoiler" id="spoilerContent">
@@ -52,21 +58,18 @@
             </div>
         </div>
 
-        <!-- OSINT Section -->
-        <div id="osintSection" style="display: none;">
+        <div id="osintSection" class="section-card" style="display: none;">
             <senti-button id="checkIp" color="#0078D4" text-color="#FFFFFF" text="Check IP"
                 tooltip="Check an IP address for reputation"></senti-button>
             <senti-button id="checkHash" color="#0078D4" text-color="#FFFFFF" text="Check Hash"></senti-button>
             <senti-button id="defangURL" color="#0078D4" text-color="#FFFFFF" text="Defang URL"
                 tooltip="Defang the URL in your clipboard"></senti-button>
             <input type="text" id="osintInput" placeholder="Enter IP address or hash..." />
-            <br>
             <div id="results" class="osint-links"></div>
             <button id="copyAllBtn" class="copy-btn" style="display: none; margin-top: 10px;">Copy All</button>
         </div>
 
-        <!-- Development Section -->
-        <div id="developmentSection" style="display: none;">
+        <div id="developmentSection" class="section-card" style="display: none;">
             <button id="revealBtn2">Reveal</button>
             <input type="text" id="devSearchBox" placeholder="Search by Client..." />
             <div class="spoiler" id="spoilerContent2">
