@@ -325,6 +325,10 @@ var defaultQueue = function () {
         // console.log("Do not update")
       }
     }
+
+    if (enabled) {
+      setSelectAllVisibility(false);
+    }
     
   });
 
