@@ -252,11 +252,11 @@ tbody tr:hover {
 #results {
     margin-top: 8px;
     min-height: 110px;
-        max-height: 200px;
+    max-height: 900px;
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: 10px;
-padding: 10px;
+    padding: 10px;
     background: var(--surface-muted);
 }
 #results:empty::before {
@@ -267,7 +267,7 @@ padding: 10px;
 .osint-links {
     display: flex;
     flex-direction: column;
-gap: 8px;
+    gap: 8px;
 }
 
 .osint-links .link-block {
@@ -275,7 +275,7 @@ gap: 8px;
     background: color-mix(in srgb, var(--accent-soft) 55%, transparent);
     color: var(--text);
     padding: 10px;
-border-radius: 9px;
+    border-radius: 9px;
 }
 
 #copyAllBtn {
