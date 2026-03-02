@@ -888,6 +888,7 @@ function displayResults(response) {
                     <p><strong>Security Vendors:</strong> ${vtData.last_analysis_stats.malicious} out of ${vtData.last_analysis_stats.undetected + vtData.last_analysis_stats.malicious} security vendors and ${typeUnsupported} sandboxes flagged this file as malicious</p>
                     <div class="circle-container">
                     <svg width="120" height="120" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="54" fill="#FFFF" stroke="#ccc" stroke-width="1"/>
                         <circle cx="60" cy="60" r="54" fill="none" stroke="#ccc" stroke-width="12"/>
                         <circle cx="60" cy="60" r="54" fill="none" stroke="#f00" stroke-width="12" stroke-dasharray="339.292" stroke-dashoffset="339.292" class="progress-circle"/>
                         <text x="60" y="65" text-anchor="middle" fill="#333" font-size="20" class="progress-text"></text>

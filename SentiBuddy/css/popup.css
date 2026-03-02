@@ -47,7 +47,7 @@ body {
     background: linear-gradient(145deg, var(--bg-start), var(--bg-end));
     color: var(--text);
     overflow-x: hidden;
-padding: 12px;
+    padding: 12px;
 }
 
 .container {
@@ -133,6 +133,7 @@ color: #ffffff;
     padding: 10px;
     animation: fadeIn 0.18s ease;
 }
+
 #grouping,
 #osintSection {
     display: flex;
@@ -318,20 +319,19 @@ color: #16a34a;
 }
 
 .progress-container {
-width: 100%;
+    width: 100%;
     border-radius: 999px;
-    overflow: hidden;
-background: color-mix(in srgb, var(--border) 78%, transparent);
+    background: color-mix(in srgb, var(--border) 78%, transparent);
     margin: 8px 0;
 }
 
 .progress-bar {
-height: 18px;
+    height: 18px;
     border-radius: 999px;
     color: #ffffff;
     font-size: 11px;
     text-align: center;
-line-height: 18px;
+    line-height: 18px;
     transition: width 0.25s ease;
 }
 
@@ -372,8 +372,25 @@ list-style: none;
 .visible {
     display: block;
 }
+
+.circle-container[data-theme="dark"] {
+    --bg-start: #0b1220;
+    --bg-end: #121a2a;
+    --surface: rgba(18, 26, 42, 0.95);
+    --surface-2: #111827;
+    --surface-muted: #1e293b;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --success: #22c55e;
+    --danger: #fb923c;
+    --shadow: 0 12px 28px rgba(2, 6, 23, 0.55);
+}
+
 .circle-container {
-width: 120px;
+    width: 120px;
     height: 120px;
     display: flex;
     align-items: center;
@@ -381,7 +398,7 @@ width: 120px;
 }
 
 .progress-circle {
-transition: stroke-dashoffset 0.6s ease;
+    transition: stroke-dashoffset 0.6s ease;
     transform: rotate(-90deg);
     transform-origin: 50% 50%;
 }
