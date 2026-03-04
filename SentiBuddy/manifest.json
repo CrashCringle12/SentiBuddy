@@ -24,7 +24,7 @@
      },
     "commands": {
       "toggle-queue-filtering": {
-        "description": "Activate extension",
+        "description": "Initiate Queue Filtering",
         "suggested_key": {
           "default": "Alt+A",
           "mac": "Command+Shift+A"
@@ -45,7 +45,7 @@
         }
       },
       "open-config": {
-        "description": "Modify Configurations",
+        "description": "Open Config",
         "suggested_key": {
           "default": "Alt+C",
           "mac": "Command+Shift+C"
