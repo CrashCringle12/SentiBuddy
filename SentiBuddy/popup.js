@@ -24,6 +24,8 @@ function setLoading() {
 
 let devData;
 let data;
+let clientTableSchema;
+let devTableSchema;
 const SAFE_URL_PROTOCOLS = ['https:'];
 
 function sanitizeUrl(url) {
@@ -59,40 +61,181 @@ function createLinkCell(href, text) {
   return td;
 }
 
-// Client Info Table Functions
-function renderTable(filteredData) {
-  const tableBody = document.getElementById("tableBody");
-  tableBody.innerHTML = "";
+const DEFAULT_TABLE_SCHEMAS = {
+  data: {
+    columns: [
+      { key: 'code', displayName: 'Code' },
+      { key: 'client', displayName: 'Client' },
+      { key: 'department', displayName: 'Department' },
+      { key: 'lead', displayName: 'Client Lead' },
+      { key: 'edr', displayName: 'EDR', hyperlink: { urlField: 'edrLink' } },
+      { key: 'contact', displayName: 'Contacts', hyperlink: { text: 'Info' } }
+    ]
+  },
+  devData: {
+    columns: [
+      { key: 'client', displayName: 'Client' },
+      { key: 'sentinelName', displayName: 'Sentinel Instance', hyperlink: { urlField: 'sentinelLink' } },
+      { key: 'rgName', displayName: 'Resource Group', hyperlink: { urlField: 'rgLink' } },
+      { key: 'subscriptionName', displayName: 'Subscription', hyperlink: { urlField: 'subscriptionLink' } },
+      { key: 'location', displayName: 'Location' }
+    ]
+  }
+};
 
-  filteredData.forEach(row => {
-    const tr = document.createElement("tr");
+function titleCaseLabel(value) {
+  if (!value) return '';
+  const separated = String(value).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ');
+  return separated.charAt(0).toUpperCase() + separated.slice(1);
+}
 
-    tr.appendChild(createTextCell(row.code));
-    tr.appendChild(createTextCell(row.client));
-    tr.appendChild(createTextCell(row.department));
-    tr.appendChild(createTextCell(row.lead));
-    tr.appendChild(createLinkCell(row.edrLink, row.edr));
-    tr.appendChild(createLinkCell(row.contact, "Info"));
+function getArrayOrEmpty(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function getHyperlinkConfig(column) {
+  return column?.hyperlink || column?.hyperLink;
+}
+
+function cloneColumns(schema) {
+  return getArrayOrEmpty(schema?.columns).map(col => ({
+    ...col,
+    hyperlink: getHyperlinkConfig(col) ? { ...getHyperlinkConfig(col) } : undefined
+  }));
+}
+
+function normalizeSchemaColumns(schema) {
+  if (!schema) return [];
+
+  if (Array.isArray(schema?.columns)) {
+    return schema.columns.map(col => ({
+      ...col,
+      hyperlink: getHyperlinkConfig(col) ? { ...getHyperlinkConfig(col) } : undefined
+    }));
+  }
+
+  if (schema?.columns && typeof schema.columns === 'object') {
+    return Object.entries(schema.columns).map(([key, value]) => ({
+      key,
+      displayName: value?.displayName,
+      hyperlink: getHyperlinkConfig(value) ? { ...getHyperlinkConfig(value) } : undefined
+    }));
+  }
+
+  if (typeof schema === 'object') {
+    return Object.entries(schema).map(([key, value]) => ({
+      key,
+      displayName: value?.displayName,
+      hyperlink: getHyperlinkConfig(value) ? { ...getHyperlinkConfig(value) } : undefined
+    }));
+  }
+
+  return [];
+}
+
+function inferColumnsFromRows(rows) {
+  const firstRow = rows[0] || {};
+  const keys = Object.keys(firstRow).filter(key => !key.endsWith('Link'));
+  return keys.map(key => {
+    const linkKey = `${key}Link`;
+    const hasCompanionLink = Object.prototype.hasOwnProperty.call(firstRow, linkKey);
+    return {
+      key,
+      displayName: titleCaseLabel(key),
+      hyperlink: hasCompanionLink ? { urlField: linkKey } : undefined
+    };
+  });
+}
+
+function resolveTableSchema(tableName, rows, schemaFromConfig) {
+  const configuredColumns = normalizeSchemaColumns(schemaFromConfig);
+  if (configuredColumns.length) return configuredColumns;
+
+  const defaultColumns = cloneColumns(DEFAULT_TABLE_SCHEMAS[tableName]);
+  if (defaultColumns.length) return defaultColumns;
+
+  return inferColumnsFromRows(rows);
+}
+
+function getCellText(row, column) {
+  const hyperlink = getHyperlinkConfig(column);
+
+  if (hyperlink?.textField) {
+    return row?.[hyperlink.textField] ?? '';
+  }
+
+  if (hyperlink?.text !== undefined) {
+    return hyperlink.text;
+  }
+
+  return row?.[column.key] ?? '';
+}
+
+function getCellLink(row, column) {
+  const hyperlink = getHyperlinkConfig(column);
+  if (!hyperlink) return '';
+
+  if (hyperlink.urlField) {
+    return row?.[hyperlink.urlField] ?? '';
+  }
+
+  return row?.[column.key] ?? '';
+}
+
+function renderTableHeaders(headId, columns) {
+  const tableHead = document.getElementById(headId);
+  if (!tableHead) return;
+
+  tableHead.innerHTML = '';
+  const tr = document.createElement('tr');
+
+  columns.forEach(column => {
+    const th = document.createElement('th');
+    th.textContent = column.displayName || titleCaseLabel(column.key);
+    tr.appendChild(th);
+  });
+
+  tableHead.appendChild(tr);
+}
+
+function renderRows(bodyId, rows, columns) {
+  const tableBody = document.getElementById(bodyId);
+  if (!tableBody) return;
+
+  tableBody.innerHTML = '';
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+
+    columns.forEach(column => {
+      if (getHyperlinkConfig(column)) {
+        tr.appendChild(createLinkCell(getCellLink(row, column), getCellText(row, column)));
+      } else {
+        tr.appendChild(createTextCell(row?.[column.key] ?? ''));
+      }
+    });
 
     tableBody.appendChild(tr);
   });
 }
 
+// Client Info Table Functions
+function renderTable(filteredData) {
+  renderRows('tableBody', filteredData, clientTableSchema || []);
+}
+
 // Development Table Functions
 function renderDevTable(filteredData) {
-  const tableBody = document.getElementById("devTableBody");
-  tableBody.innerHTML = "";
+  renderRows('devTableBody', filteredData, devTableSchema || []);
+}
 
-  filteredData.forEach(row => {
-    const tr = document.createElement("tr");
+function configureTableSchemas(tableDataConfig) {
+  const schemas = tableDataConfig?.schemas || {};
+  clientTableSchema = resolveTableSchema('data', data, schemas.data);
+  devTableSchema = resolveTableSchema('devData', devData, schemas.devData);
 
-    tr.appendChild(createTextCell(row.client));
-    tr.appendChild(createLinkCell(row.sentinelLink, row.sentinelName));
-    tr.appendChild(createLinkCell(row.rgLink, row.rgName));
-    tr.appendChild(createLinkCell(row.subscriptionLink, row.subscriptionName));
-    tr.appendChild(createTextCell(row.location));
-    tableBody.appendChild(tr);
-  });
+  renderTableHeaders('tableHead', clientTableSchema);
+  renderTableHeaders('devTableHead', devTableSchema);
 }
 
 var configDataURL = '';
@@ -116,14 +259,17 @@ async function fetchClientData() {
   
     if (cachedData && cachedTimestamp && (now - parseInt(cachedTimestamp) < cacheDuration)) {
       // Use cached data
-      devData = JSON.parse(cachedData).tableData.devData;
-      data = JSON.parse(cachedData).tableData.data
+      const parsedCached = JSON.parse(cachedData);
+      devData = getArrayOrEmpty(parsedCached?.tableData?.devData);
+      data = getArrayOrEmpty(parsedCached?.tableData?.data);
+      configureTableSchemas(parsedCached?.tableData);
     } else {
         try {        
           const response = await fetch(configDataURL); // Replace with actual URL
           const result = await response.json();
-          devData = result.tableData.devData;
-          data = result.tableData.data
+          devData = getArrayOrEmpty(result?.tableData?.devData);
+          data = getArrayOrEmpty(result?.tableData?.data);
+          configureTableSchemas(result?.tableData);
 
         // Cache result
         localStorage.setItem(cacheKey, JSON.stringify(result));
@@ -133,21 +279,26 @@ async function fetchClientData() {
         console.error('Failed to fetch client data:', error);
         return;
       }
-    } 
+    }
+
+    if (!clientTableSchema || !devTableSchema) {
+      configureTableSchemas();
+    }
+
     renderTable(data);
     renderDevTable(devData);
   }
   
 document.getElementById("searchBox").addEventListener("input", function () {
   const query = this.value.toLowerCase();
-  const filtered = data.filter(item => item.code.toLowerCase().includes(query));
+  const filtered = data.filter(item => String(item?.code ?? '').toLowerCase().includes(query));
   renderTable(filtered);
 });
 
 
 document.getElementById("devSearchBox").addEventListener("input", function () {
   const query = this.value.toLowerCase();
-  const filtered = devData.filter(item => item.client.toLowerCase().includes(query));
+  const filtered = devData.filter(item => String(item?.client ?? '').toLowerCase().includes(query));
   renderDevTable(filtered);
 });
 
