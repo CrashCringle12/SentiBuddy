@@ -1,0 +1,130 @@
+{
+    "tableData": {
+        "schemas": {
+            "data": {
+                "columns": [
+                    {
+                        "key": "code",
+                        "displayName": "Code"
+                    },
+                    {
+                        "key": "client",
+                        "displayName": "Client"
+                    },
+                    {
+                        "key": "department",
+                        "displayName": "Department"
+                    },
+                    {
+                        "key": "lead",
+                        "displayName": "Client Lead"
+                    },
+                    {
+                        "key": "edr",
+                        "displayName": "EDR",
+                        "hyperlink": {
+                            "urlField": "edrLink"
+                        }
+                    },
+                    {
+                        "key": "contact",
+                        "displayName": "Contacts",
+                        "hyperlink": {
+                            "text": "Info"
+                        }
+                    }
+                ]
+            },
+            "devData": {
+                "columns": [
+                    {
+                        "key": "client",
+                        "displayName": "Client"
+                    },
+                    {
+                        "key": "sentinelName",
+                        "displayName": "Sentinel Instance",
+                        "hyperlink": {
+                            "urlField": "sentinelLink"
+                        }
+                    },
+                    {
+                        "key": "rgName",
+                        "displayName": "Resource Group",
+                        "hyperlink": {
+                            "urlField": "rgLink"
+                        }
+                    },
+                    {
+                        "key": "subscriptionName",
+                        "displayName": "Subscription",
+                        "hyperlink": {
+                            "urlField": "subscriptionLink"
+                        }
+                    },
+                    {
+                        "key": "adx",
+                        "displayName": "ADX",
+                        "hyperlink": {
+                            "urlField": "adxLink"
+                        }
+                    },
+                    {
+                        "key": "location",
+                        "displayName": "Location"
+                    }
+                ]
+            }
+        },
+        "data": [
+            {
+                "code": "AppB2",
+                "client": "Apple Bank",
+                "department": "Banking",
+                "lead": "Jimbo",
+                "edr": "CrowdStrike",
+                "edrLink": "https://example.com/edr/crowdstrike",
+                "adx": "Apple ADX",
+                "adxLink": "https://dataexplorer.azure.com/clusters/apple-prod",
+                "contact": "https://example.com/contact/apple-bank"
+            },
+            {
+                "code": "FinX",
+                "client": "FinTech Corp",
+                "department": "Finance",
+                "lead": "Sarah",
+                "edr": "SentinelOne",
+                "edrLink": "https://example.com/edr/sentinelone",
+                "adx": "FinX ADX",
+                "adxLink": "https://dataexplorer.azure.com/clusters/finx-prod",
+                "contact": "https://example.com/contact/finx"
+            }
+        ],
+        "devData": [
+            {
+                "client": "Apple Bank",
+                "sentinelName": "apple-prod",
+                "sentinelLink": "https://portal.azure.com/",
+                "rgName": "apple-security-rg",
+                "rgLink": "https://portal.azure.com/",
+                "subscriptionName": "Apple Security",
+                "subscriptionLink": "https://portal.azure.com/",
+                "adx": "Apple ADX Cluster",
+                "adxLink": "https://dataexplorer.azure.com/clusters/apple-prod",
+                "location": "eastus"
+            },
+            {
+                "client": "FinTech Corp",
+                "sentinelName": "finx-prod",
+                "sentinelLink": "https://portal.azure.com/",
+                "rgName": "finx-security-rg",
+                "rgLink": "https://portal.azure.com/",
+                "subscriptionName": "FinX Security",
+                "subscriptionLink": "https://portal.azure.com/",
+                "adx": "FinX ADX Cluster",
+                "adxLink": "https://dataexplorer.azure.com/clusters/finx-prod",
+                "location": "westus2"
+            }
+        ]
+    }
+}
