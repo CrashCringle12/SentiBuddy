@@ -976,6 +976,7 @@ const notificationButton = document.querySelector('senti-button#notificationTogg
 const settingsButton = document.getElementById("settingsBtn");
 const themeToggleButton = document.getElementById('themeToggleBtn');
 const startQueueButton = document.getElementById('startQueueFiltering');
+const enhancedQueueButton = document.getElementById('enhancedQueueMode');
 const timerToggleButton = document.getElementById('toggleTimerCount');
 const openDashboardButton = document.getElementById('openDashboard');
 
@@ -1186,6 +1187,32 @@ startQueueButton.addEventListener('click', () => {
         }
     });
 });
+
+function updateEnhancedQueueButton(active) {
+    if (!enhancedQueueButton) return;
+    enhancedQueueButton.setText(active ? 'Enhanced Queue: On' : 'Enhanced Queue: Off');
+    enhancedQueueButton.setColor(active ? '#107C10' : '#D83B01');
+}
+
+if (enhancedQueueButton) {
+    chrome.storage.local.get({ toggleExperiments: false, enhancedQueueEnabled: false }, (items) => {
+        enhancedQueueButton.style.display = items.toggleExperiments ? '' : 'none';
+        updateEnhancedQueueButton(items.enhancedQueueEnabled);
+    });
+
+    enhancedQueueButton.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ type: 'toggle-enhanced-queue' }, (response) => {
+            if (!response) {
+                document.getElementById('results').textContent = 'Failed to toggle Enhanced Queue.';
+                return;
+            }
+            updateEnhancedQueueButton(response.active);
+            document.getElementById('results').textContent = response.active
+                ? 'Enhanced Queue on. The panel loads the full queue from the Sentinel Incidents page.'
+                : 'Enhanced Queue off.';
+        });
+    });
+}
 
 if (timerToggleButton) {
     timerToggleButton.addEventListener('click', () => {

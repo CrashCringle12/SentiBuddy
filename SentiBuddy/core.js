@@ -241,12 +241,15 @@ const sentinelAdapter = {
     if (elements[indexes['Workspace']]) {
       workspace = elements[indexes['Workspace']].textContent.trim();
     } else {
-      // Fallback: parse the blade subtitle. (Same behavior as before — will
-      // throw if the subtitle element is missing, matching the original.)
-      workspace = document
-        .querySelector('.fxs-blade-title-subtitleText.msportalfx-tooltip-overflow.fxs-portal-subtext')
-        .textContent.trim();
-      workspace = workspace.match(/'([^']+)'/)[1];
+      // Fallback: parse the blade subtitle. Extract text within quotes if present,
+      // otherwise use the full subtitle (for single-tenant views without quotes).
+      const subtitle = document
+        .querySelector('.fxs-blade-title-subtitleText.msportalfx-tooltip-overflow.fxs-portal-subtext');
+      if (subtitle) {
+        const subtitleText = subtitle.textContent.trim();
+        const m = subtitleText.match(/'([^']+)'/);
+        workspace = m ? m[1] : subtitleText;
+      }
     }
 
     const incID = elements[indexes['Incident number']].textContent.trim();
