@@ -9,6 +9,10 @@ function maskToken(tok){ if(!tok) return tok; if(DEBUG_TOKENS_VERBOSE) return to
 
 const MAX_BYTES = 2_000_000;
 
+// Track last emitted tokens to avoid re-emitting the same ones repeatedly
+let lastEmittedToken = null;
+let lastEmittedAuxHeader = null;
+
 // Same-window only: pin the target origin so messages are never delivered cross-origin.
 function emit(msg){ try{ window.postMessage(msg, location.origin); }catch{} }
 function decodeBuf(ab){ try{ return new TextDecoder('utf-8').decode(ab.byteLength>MAX_BYTES?ab.slice(0,MAX_BYTES):ab);}catch{return'';} }
@@ -121,19 +125,21 @@ function extractIncidentsQuery(text) {
 // Parse auxiliary header into individual bearer tokens
 function parseAuxHeader(val){ if(!val) return []; return val.split(',').map(s=>s.trim()).filter(Boolean); }
 
-// Scrape outgoing headers to capture Authorization and x-ms-authorization-auxiliary
+// Scrape outgoing headers to capture Authorization and x-ms-authorization-auxiliary (only when they change)
 function handleHeadersForMgmt(url, headersLike){
   try{
     const H=new Headers(headersLike||{});
     const auth=H.get('Authorization');
-    if(auth && url.startsWith('https://management.azure.com/')){
+    if(auth && url.startsWith('https://management.azure.com/') && auth !== lastEmittedToken){
       dlog('Auth header found', url, 'token(masked)=', maskToken(auth));
+      lastEmittedToken = auth;
       emit({ __armAuth:true, token: auth });
     }
     const aux=H.get('x-ms-authorization-auxiliary');
-    if(aux && url.startsWith('https://management.azure.com/')){
+    if(aux && url.startsWith('https://management.azure.com/') && aux !== lastEmittedAuxHeader){
       const tokens=parseAuxHeader(aux);
       dgroup('Aux header found', ()=>{ dlog('aux count =', tokens.length); });
+      lastEmittedAuxHeader = aux;
       emit({ __armAux:true, header: aux, tokens });
     }
   }catch{}

@@ -12,8 +12,14 @@
 
   function dlog(...args) { if (DEBUG) console.log(`[${DEBUG_TAG}]`, ...args); }
 
-  // 1) Inject page hook immediately (same as NewFeedTest)
+  // 1) Inject page hook once per page load (avoid re-injecting on repeated navigations)
+  // The injected script tracks the last emitted tokens and only re-emits when they change.
   (function inject() {
+    if (window.__sentiBuddyInjected) {
+      dlog('Page hook already injected, skipping');
+      return;
+    }
+    window.__sentiBuddyInjected = true;
     const s = document.createElement('script');
     s.src = chrome.runtime.getURL('enhanced-queue/injected.js');
     s.type = 'text/javascript';

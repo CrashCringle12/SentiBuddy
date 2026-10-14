@@ -108,7 +108,7 @@
 }
 #sb-comments-view .sbc-author { font-weight: 600; font-size: 13px; }
 #sb-comments-view .sbc-time { color: var(--sbc-muted); font-size: 12px; margin-left: auto; white-space: nowrap; }
-#sb-comments-view .sbc-body { overflow-wrap: anywhere; font-size: 13px; }
+#sb-comments-view .sbc-body { overflow-wrap: anywhere; font-size: 13px; white-space: pre-line; }
 #sb-comments-view .sbc-body p { margin: 0 0 6px; }
 #sb-comments-view .sbc-body table { border-collapse: collapse; margin: 6px 0; max-width: 100%; display: block; overflow-x: auto; }
 #sb-comments-view .sbc-body td, #sb-comments-view .sbc-body th { border: 1px solid var(--sbc-border); padding: 3px 8px; text-align: left; vertical-align: top; }
