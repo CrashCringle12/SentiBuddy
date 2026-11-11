@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Client Tool</title>
+    <title>SentiBuddy</title>
     <link rel="stylesheet" href="css/popup.css">
 </head>
 
@@ -15,7 +15,7 @@
                     <img src="icon.png" alt="SentiBuddy icon" class="brand-icon">
                     <h1>SentiBuddy</h1>
                 </div>
-                <p>Queue, Client, Development, and OSINT tools in one place</p>
+                <p>Queue, reference tables, and OSINT tools in one place</p>
             </div>
         </div>
 
@@ -23,7 +23,7 @@
             <button id="queueBtn">Operations</button>
             <button id="clientBtn" class="active">Client Info</button>
             <button id="developmentBtn">Development</button>
-            <button id="incidentsBtn">Incidents</button>
+            <button id="incidentsBtn" title="Experimental: time tracking" hidden>Time</button>
             <button id="themeToggleBtn" title="Toggle dark mode">🌙</button>
             <button id="settingsBtn" title="Open settings">⚙️</button>
         </div>
@@ -37,10 +37,10 @@
                 <senti-button id="startQueueFiltering" color="#D83B01" text-color="#FFFFFF" icon="\23F3" size="sm"
                     text="Queue Filter: Off" tooltip="Toggle Queue Filtering"></senti-button>
                 <senti-button id="enhancedQueueMode" color="#D83B01" text-color="#FFFFFF" icon="\1F680" size="sm"
-                    text="Enhanced Queue: Off" tooltip="Experimental: floating panel with the full filtered incident queue"
-                    style="display: none;"></senti-button>
+                    text="Enhanced Queue: Off" tooltip="Floating panel with the full filtered incident queue"></senti-button>
                 <senti-button id="toggleTimerCount" color="#D83B01" text-color="#FFFFFF" icon="\23F2" size="sm"
-                    text="Timer/Count: Off" tooltip="Toggle Timer/Count Display"></senti-button>
+                    text="Timer: Off" tooltip="Experimental: show or hide the time-tracking timer on the portal"
+                    style="display: none;"></senti-button>
             </div>
 
             <div id="osintSection" class="embedded-tools">
@@ -61,7 +61,7 @@
 
         <div id="clientSection" class="section-card">
             <button id="revealBtn">Reveal</button>
-            <input type="text" id="searchBox" placeholder="Search client info..." />
+            <input type="text" id="searchBox" placeholder="Search..." />
             <div class="spoiler" id="spoilerContent">
                 <table>
                     <thead id="tableHead"></thead>
@@ -72,7 +72,7 @@
 
         <div id="developmentSection" class="section-card" style="display: none;">
             <button id="revealBtn2">Reveal</button>
-            <input type="text" id="devSearchBox" placeholder="Search by Client..." />
+            <input type="text" id="devSearchBox" placeholder="Search..." />
             <div class="spoiler" id="spoilerContent2">
                 <table>
                     <thead id="devTableHead"></thead>
@@ -82,41 +82,103 @@
         </div>
 
         <div id="incidentsSection" class="section-card" style="display: none;">
-            <h2 class="section-subtitle">Incident Lookback</h2>
-            <p class="section-help">Request an email report of incidents worked over the selected window.</p>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="lookbackHours">Lookback (hours)</label>
-                    <input type="number" id="lookbackHours" min="1" max="8760" step="1" value="24" />
+            <div id="timeTrackingCard" class="tt-card">
+                <div class="tt-head">
+                    <h2 class="section-subtitle">Time Tracking</h2>
+                    <span id="ttState" class="tt-state"></span>
+                    <input type="date" id="ttDay" aria-label="Day to show" />
                 </div>
-                <div class="form-group">
-                    <label for="lookbackTimezone">Timezone</label>
-                    <select id="lookbackTimezone"></select>
-                </div>
-                <div class="form-group form-group-wide">
-                    <label for="lookbackEmail">Email</label>
-                    <input type="email" id="lookbackEmail" placeholder="Detecting from Azure portal..."
-                        autocomplete="email" readonly />
-                    <div id="lookbackEmailHint" class="field-hint" role="status" aria-live="polite"></div>
-                </div>
-            </div>
-            <senti-button id="submitLookback" color="#0078D4" text-color="#FFFFFF" icon="\1F4E7" size="sm"
-                text="Send Report" tooltip="Request incident lookback report"></senti-button>
-            <senti-button id="viewLookback" color="#0078D4" text-color="#FFFFFF" icon="\1F50D" size="sm"
-                text="View Report" tooltip="View incident lookback report"></senti-button>
-            <div id="incidentStatus" class="incident-status" role="status" aria-live="polite"></div>
-            <div id="incidentResults" class="incident-results" style="display: none;">
-                <h2 class="section-subtitle">Incidents</h2>
-                <div class="incident-table-wrap">
-                    <table>
-                        <thead id="incidentTableHead"></thead>
-                        <tbody id="incidentTableBody"></tbody>
-                    </table>
+                <p id="ttOff" class="section-help" hidden>
+                    Time tracking is off. <button type="button" id="ttOpenSettings" class="tt-link">Turn it on in Settings</button>.
+                </p>
+                <div id="ttBody" hidden>
+                    <p class="section-help">Hours per client for the selected day. Click a code or SentiBuddy hours to edit;
+                        drag a row to reorder, or drop it onto another row to merge them.</p>
+                    <div class="tt-totals">
+                        <div class="tt-total">
+                            <span class="tt-total-label">SentiBuddy</span>
+                            <strong id="ttTotal">0:00</strong>
+                        </div>
+                        <div class="tt-total" id="ttTotalMetricsWrap" hidden>
+                            <span class="tt-total-label">Metrics</span>
+                            <strong id="ttTotalMetrics">—</strong>
+                        </div>
+                        <div class="tt-total" id="ttTotalDiffWrap" hidden>
+                            <span class="tt-total-label" title="Metrics minus SentiBuddy">Difference</span>
+                            <strong id="ttTotalDiff">—</strong>
+                        </div>
+                    </div>
+                    <div class="tt-table-wrap">
+                        <table class="tt-table">
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th id="ttCodeCol">Code</th>
+                                    <th class="tt-num" title="Hours tracked by SentiBuddy">SentiBuddy</th>
+                                    <th class="tt-num" id="ttMetricsCol" title="Hours from your organisation's metrics (incident activity in Sentinel)" hidden>Metrics</th>
+                                    <th class="tt-num" id="ttDiffCol" title="Metrics minus SentiBuddy" hidden>Δ</th>
+                                    <th class="tt-row-actions"><span class="visually-hidden">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="ttRows"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="tt-metrics-box">
+                        <div id="ttMetricsSetup" class="tt-muted" hidden>
+                            Metrics comparison isn't set up. Your organisation's central config needs an
+                            <code>incidentLookbackEndpoint</code> (or <code>timeTracking.metricsEndpoint</code>).
+                        </div>
+                        <div id="ttMetricsInfo" hidden>
+                            <div class="tt-meta">
+                                <span id="ttMetricsStatus" class="tt-muted"></span>
+                            </div>
+                            <div class="tt-meta">
+                                <button type="button" id="ttRefreshCodes" class="tt-link"
+                                    title="Fetch time-entry codes only (fast)">Refresh codes</button>
+                                <button type="button" id="ttCompareMetrics" class="tt-compare" hidden>Compare metrics</button>
+                                <button type="button" id="ttAverageAll" class="tt-link" hidden
+                                    title="Set every row's SentiBuddy hours to the average of SentiBuddy and metrics (↺ on a row undoes it)">Average all rows</button>
+                            </div>
+                            <div class="tt-meta">
+                                <span class="tt-muted">Metrics for</span>
+                                <!-- Filled by popup.js from the portal; #ttMetricsUser shows who the request is actually for. -->
+                                <input type="hidden" id="lookbackEmail" />
+                                <span id="ttMetricsUser" class="tt-email"></span>
+                            </div>
+                            <div id="lookbackEmailHint" class="field-hint" role="status" aria-live="polite"></div>
+                        </div>
+                    </div>
+
+                    <div class="tt-meta">
+                        <label id="ttSourceWrap" class="tt-muted" hidden>Export hours from
+                            <select id="ttSource">
+                                <option value="sentibuddy">SentiBuddy</option>
+                                <option value="metrics">Metrics</option>
+                                <option value="average">Average of both</option>
+                            </select>
+                        </label>
+                        <label class="tt-muted tt-preview" title="Per-incident breakdown (preview, being validated)">
+                            <input type="checkbox" id="ttShowIncidents" /> Per-incident detail (preview)
+                        </label>
+                    </div>
+                    <div class="tt-actions">
+                        <senti-button id="ttPause" color="#D83B01" text-color="#FFFFFF" icon="\23F8" size="sm"
+                            text="Pause" tooltip="Pause or resume time tracking (all tabs)"></senti-button>
+                        <senti-button id="ttTimeEntry" color="#0078D4" text-color="#FFFFFF" icon="\1F4C5" size="sm"
+                            text="Time entry" tooltip="Open your time-entry site"></senti-button>
+                        <senti-button id="ttExport" color="#0078D4" text-color="#FFFFFF" icon="\2B07" size="sm"
+                            text="Export CSV" tooltip="Download this day as an importable CSV"></senti-button>
+                        <senti-button id="ttReset" color="#605E5C" text-color="#FFFFFF" icon="\21BA" size="sm"
+                            text="Reset" tooltip="Delete all tracked time (every day)"></senti-button>
+                    </div>
+                    <div id="ttStatus" class="incident-status" role="status" aria-live="polite"></div>
                 </div>
             </div>
         </div>
     </div>
     <script src="popup.js"></script>
+    <script src="time-tracking/popup.js"></script>
     <script src="components/senti-button.js"></script>
 </body>
 

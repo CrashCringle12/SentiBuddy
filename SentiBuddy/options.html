@@ -3,108 +3,255 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>SentiBuddy</title>
+    <title>SentiBuddy Settings</title>
     <link rel="stylesheet" href="css/options.css">
 </head>
 
 <body>
-    <div class="page-shell">
-        <header class="page-header">
+    <div class="sticky-top">
+    <header class="topbar">
+        <div class="brand">
+            <img src="icon.png" alt="" class="brand-icon" />
             <div>
-                <h1>Extension Configuration</h1>
-                <p>Manage queue behavior, notifications, integrations, and filters.</p>
+                <h1>SentiBuddy Settings</h1>
+                <p>Queue behavior, notifications, SLAs, filters and integrations.</p>
             </div>
-            <button id="optionsThemeToggle" class="button ghost" type="button" title="Toggle dark mode">🌙 Theme</button>
-        </header>
-
-        <div class="tab">
-            <button id="generalOptionsTab" class="tablinks">General Options</button>
         </div>
+        <div class="topbar-actions">
+            <div id="status" aria-live="polite"></div>
+            <button id="import" class="button secondary" type="button" title="Import configuration">⤵ Import</button>
+            <button id="export" class="button secondary" type="button" title="Export configuration">⤴ Export</button>
+            <button id="optionsThemeToggle" class="button secondary" type="button" title="Toggle dark mode">🌙 Theme</button>
+            <button id="save" class="button" type="button" title="Save configuration">💾 Save</button>
+        </div>
+    </header>
+    <div id="unsavedBanner" class="unsaved-banner" role="status" hidden>
+        <span>⚠ You have unsaved changes. They won't take effect until you save.</span>
+        <button id="bannerDiscard" class="button secondary small" type="button">Discard</button>
+        <button id="bannerSave" class="button small" type="button">Save now</button>
+    </div>
+    </div>
 
-        <div id="GeneralOptions" class="tabcontent">
-            <section class="card actions-card">
-                <button id="save" class="button" title="Save configuration">💾 Save</button>
-                <button id="export" class="button secondary" title="Export configuration">⤴ Export</button>
-                <button id="import" class="button secondary" title="Import configuration">⤵ Import</button>
-                <div id="status" aria-live="polite"></div>
+    <div class="layout">
+        <nav class="sidenav" aria-label="Settings sections">
+            <a href="#sec-remote">Remote Configuration</a>
+            <a href="#sec-queue">Queue Behavior</a>
+            <a href="#sec-time">Time Tracking</a>
+            <a href="#sec-notifications">Desktop Notifications</a>
+            <a href="#sec-sla">Enhanced Queue SLA</a>
+            <a href="#sec-filters">Regex Filters</a>
+            <a href="#sec-keys">Integration Keys</a>
+        </nav>
+
+        <main class="content">
+            <div class="grid-2">
+                <section class="card" id="sec-remote">
+                    <h2>Remote Configuration</h2>
+                    <p class="hint">Settings pulled from the config link are locked 🔒. Unlock a field to override it locally.</p>
+                    <label class="field-label" for="configDataURL">Config Link</label>
+                    <div class="inline-field">
+                        <input type="text" id="configDataURL" placeholder="https://..." />
+                        <button type="button" id="useConfigFromUrl" class="button">Pull</button>
+                    </div>
+
+                    <div class="two-up">
+                        <div>
+                            <label class="field-label" for="dashboardTitle">Dashboard Button Title</label>
+                            <div class="inline-field">
+                                <input type="text" id="dashboardTitle" placeholder="Example: Security Dashboard" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label" for="dashboardLink">Dashboard Destination URL</label>
+                            <div class="inline-field">
+                                <input type="text" id="dashboardLink" placeholder="https://..." />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card" id="sec-queue">
+                    <h2>Queue Behavior</h2>
+                    <label class="toggle-row" for="removeFromQueue">
+                        <span>Remove matches from queue<small>Hide incidents that match the regex filters below.</small></span>
+                        <input type="checkbox" id="removeFromQueue" />
+                    </label>
+                    <label class="toggle-row" for="toggleExperiments">
+                        <span>Show experimental features
+                            <small>Currently: the Time tab and the time-tracking timer on the portal.</small></span>
+                        <input type="checkbox" id="toggleExperiments" />
+                    </label>
+                    <label class="field-label" for="workspaceClientPattern">Workspace → client pattern (regex)</label>
+                    <div class="inline-field">
+                        <input type="text" id="workspaceClientPattern" placeholder="e.g. ^soc-(?&lt;client&gt;[a-z0-9]+)$" />
+                    </div>
+                    <p class="hint">Turns a workspace name into a client code for notifications, the Enhanced Queue and time tracking
+                        (named group <code>client</code> or the first group). Empty: the workspace name is used.</p>
+                </section>
+            </div>
+
+            <section class="card" id="sec-time">
+                <h2>Time Tracking <small class="hint">(experimental)</small></h2>
+                <p class="hint">Time is recorded in the background. The Time tab and the portal timer show, and the metrics
+                    endpoint is used, only with "Show experimental features" on.</p>
+                <div class="grid-2 inner">
+                    <div>
+                        <label class="toggle-row" for="timeTrackingEnabled">
+                            <span>Track time per incident
+                                <small>Counts time per day for the incident, workspace or ADX cluster you were last on in the Azure portal. Shown in a timer on the portal and in the SentiBuddy menu's Time tab, with a CSV export for your timesheet.</small></span>
+                            <input type="checkbox" id="timeTrackingEnabled" />
+                        </label>
+                        <label class="toggle-row" for="timeTrackingAutoPause">
+                            <span>Auto-pause when I leave the portal tab
+                                <small>Off: time keeps counting for the workspace / incident you were last on while you work in other tabs or apps (e.g. writing notes). On: counting stops whenever that portal tab isn't the one in front.</small></span>
+                            <input type="checkbox" id="timeTrackingAutoPause" />
+                        </label>
+                        <label class="field-label" for="timeTrackingIdleMinutes">Stop counting after this many minutes without activity (anywhere on the computer)</label>
+                        <div class="inline-field"><input type="number" id="timeTrackingIdleMinutes" min="1" max="120" step="1" class="narrow" /></div>
+                        <label class="field-label" for="timeTrackingAutoResetTime">Automatically reset tracked time daily at (HH:MM, 24h, local; empty = never)</label>
+                        <div class="inline-field"><input type="text" id="timeTrackingAutoResetTime" placeholder="e.g. 06:00" class="narrow" /></div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="timeEntryTitle">Time-entry Button Title</label>
+                        <div class="inline-field">
+                            <input type="text" id="timeEntryTitle" placeholder="Time entry" />
+                        </div>
+                        <label class="field-label" for="timeEntryLink">Time-entry Destination URL</label>
+                        <div class="inline-field">
+                            <input type="text" id="timeEntryLink" placeholder="https://..." />
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            <section class="card remote-config">
-                <h2>Remote Configuration</h2>
-                <label class="field-label" for="configDataURL">Config Link</label>
-                <div class="inline-field remote-inline">
-                    <input type="text" id="configDataURL" />
-                    <button type="button" id="useConfigFromUrl" class="button">Pull</button>
-                </div>
-
-                <label class="field-label" for="dashboardTitle">Dashboard Button Title</label>
-                <div class="inline-field remote-inline">
-                    <input type="text" id="dashboardTitle" placeholder="Example: Security Dashboard" />
-                </div>
-
-                <label class="field-label" for="dashboardLink">Dashboard Destination URL</label>
-                <div class="inline-field remote-inline">
-                    <input type="text" id="dashboardLink" placeholder="https://..." />
+            <section class="card" id="sec-notifications">
+                <h2>Desktop Notifications</h2>
+                <div class="grid-2 inner">
+                    <div>
+                        <label class="toggle-row" for="desktopNotifications">
+                            <span>Enable desktop notifications</span>
+                            <input type="checkbox" id="desktopNotifications" />
+                        </label>
+                        <label class="toggle-row" for="alertOnLatest">
+                            <span>Only notify on latest<small>One notification per queue update instead of one per incident.</small></span>
+                            <input type="checkbox" id="alertOnLatest" />
+                        </label>
+                        <label class="toggle-row" for="notifyOnMatchesOnly">
+                            <span>Only notify for incidents matching the rules
+                                <small>Off: every new or updated incident notifies. On: only incidents whose title or a tag matches a rule.</small></span>
+                            <input type="checkbox" id="notifyOnMatchesOnly" />
+                        </label>
+                    </div>
+                    <div id="notificationRulesGroup" class="rules-group">
+                        <div class="group-head">
+                            <span class="field-label">Notification Rules</span>
+                            <button type="button" id="addNotificationRule" class="button secondary small">+ Add Rule</button>
+                        </div>
+                        <div id="notificationRules"></div>
+                        <p class="hint empty-hint" id="notificationRulesEmpty">No rules yet. Add a title or tag regex.</p>
+                        <p class="hint" id="notificationRulesInactive">Rules apply only when "Only notify for incidents matching the rules" is on.</p>
+                    </div>
                 </div>
             </section>
 
-            <section class="card">
-                <h2>Behavior</h2>
-                <label class="toggle-row" for="removeFromQueue">
-                    <span>Remove Matches From Queue</span>
-                    <input type="checkbox" id="removeFromQueue" />
-                </label>
-                <label class="toggle-row" for="desktopNotifications">
-                    <span>Enable Desktop Notifications</span>
-                    <input type="checkbox" id="desktopNotifications" />
-                </label>
-                <label class="toggle-row" for="alertOnLatest">
-                    <span>Only Notify On Latest</span>
-                    <input type="checkbox" id="alertOnLatest" />
-                </label>
-                <label class="toggle-row" for="toggleExperiments">
-                    <span>Show Experimental Features</span>
-                    <input type="checkbox" id="toggleExperiments" />
-                </label>
+            <section class="card" id="sec-sla">
+                <h2 class="card-title-row"><span>Enhanced Queue SLA</span></h2>
+                <fieldset id="slaSettings" class="sla-fieldset">
+                    <label class="toggle-row" for="slaEnabled">
+                        <span>Highlight unassigned incidents approaching or past SLA
+                            <small>SLA time runs from the incident's created time. Highlighting stops once the incident is assigned or closed.
+                                The SLA column and sort only appear when at least one severity has an SLA.</small></span>
+                        <input type="checkbox" id="slaEnabled" />
+                    </label>
+
+                    <div class="sla-layout">
+                        <div>
+                            <span class="field-label">SLA per severity (minutes, blank = none)</span>
+                            <div class="sla-grid">
+                                <label for="slaHigh"><span class="sev-dot sev-high"></span>High</label>
+                                <input type="number" id="slaHigh" min="0" step="1" placeholder="e.g. 30" />
+                                <label for="slaMedium"><span class="sev-dot sev-medium"></span>Medium</label>
+                                <input type="number" id="slaMedium" min="0" step="1" placeholder="e.g. 90" />
+                                <label for="slaLow"><span class="sev-dot sev-low"></span>Low</label>
+                                <input type="number" id="slaLow" min="0" step="1" placeholder="e.g. 240" />
+                                <label for="slaInformational"><span class="sev-dot sev-info"></span>Informational</label>
+                                <input type="number" id="slaInformational" min="0" step="1" placeholder="none" />
+                            </div>
+                            <label class="field-label" for="slaWarnPercent">"Approaching" starts after this % of the SLA (blank = no approaching stage)</label>
+                            <input type="number" id="slaWarnPercent" min="0" max="100" step="1" class="narrow" placeholder="e.g. 80" />
+                        </div>
+
+                        <div class="sla-style-grid">
+                            <span></span>
+                            <span class="field-label">Color</span>
+                            <span class="field-label">Intensity</span>
+                            <span class="field-label">Preview</span>
+
+                            <span class="field-label">Approaching</span>
+                            <input type="color" id="slaWarnColor" />
+                            <span class="range-field"><input type="range" id="slaWarnIntensity" min="0" max="100" /><output id="slaWarnIntensityValue"></output></span>
+                            <div class="sla-preview" id="slaWarnPreview">12m left</div>
+
+                            <span class="field-label">Past SLA</span>
+                            <input type="color" id="slaBreachColor" />
+                            <span class="range-field"><input type="range" id="slaBreachIntensity" min="0" max="100" /><output id="slaBreachIntensityValue"></output></span>
+                            <div class="sla-preview" id="slaBreachPreview">Breached 5m ago</div>
+                        </div>
+                    </div>
+                </fieldset>
             </section>
 
-            <section class="card">
+            
+            <section class="card" id="sec-keys">
                 <h2>Integration Keys</h2>
-                <label class="field-label" for="abuseipdbAPIkey">AbuseIPDB API Key</label>
-                <input type="password" id="abuseipdbAPIkey" autocomplete="off">
-
-                <label class="field-label" for="vtkey">VirusTotal API Key</label>
-                <input type="password" id="vtkey" autocomplete="off">
-
-                <label class="field-label" for="ipInfoKey">IPInfo API Key</label>
-                <input type="password" id="ipInfoKey" autocomplete="off">
-
-                <label class="field-label" for="scamalyticsURL">Scamalytics URL</label>
-                <input type="password" id="scamalyticsURL" autocomplete="off">
+                <div class="grid-2 inner">
+                    <div>
+                        <label class="field-label" for="abuseipdbAPIkey">AbuseIPDB API Key</label>
+                        <div class="inline-field"><input type="password" id="abuseipdbAPIkey" autocomplete="off"></div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="vtkey">VirusTotal API Key</label>
+                        <div class="inline-field"><input type="password" id="vtkey" autocomplete="off"></div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="ipInfoKey">IPInfo API Key</label>
+                        <div class="inline-field"><input type="password" id="ipInfoKey" autocomplete="off"></div>
+                    </div>
+                    <div>
+                        <label class="field-label" for="scamalyticsURL">Scamalytics URL</label>
+                        <div class="inline-field"><input type="password" id="scamalyticsURL" autocomplete="off"></div>
+                    </div>
+                </div>
             </section>
 
-            <section class="card">
+            <section class="card" id="sec-filters">
                 <h2>Regex Filters</h2>
-
-                <div class="pattern-group">
-                    <label class="field-label"><b>Filter Title Regex Patterns</b></label>
-                    <div id="titlePatterns"></div>
-                    <button type="button" id="addTitlePattern" class="button secondary">Add Pattern</button>
-                </div>
-
-                <div class="pattern-group">
-                    <label class="field-label"><b>Filter Tags Regex Patterns</b></label>
-                    <div id="tagPatterns"></div>
-                    <button type="button" id="addTagPattern" class="button secondary">Add Pattern</button>
-                </div>
-
-                <div class="pattern-group">
-                    <label class="field-label"><b>Filter Owner Regex Patterns</b></label>
-                    <div id="ownerPatterns"></div>
-                    <button type="button" id="addOwnerPattern" class="button secondary">Add Pattern</button>
+                <p class="hint">Incidents matching any pattern are treated as filtered (hidden when "Remove matches from queue" is on) and never notify.</p>
+                <div class="grid-3">
+                    <div class="pattern-group">
+                        <div class="group-head">
+                            <span class="field-label">Title</span>
+                            <button type="button" id="addTitlePattern" class="button secondary small">+ Add</button>
+                        </div>
+                        <div id="titlePatterns"></div>
+                    </div>
+                    <div class="pattern-group">
+                        <div class="group-head">
+                            <span class="field-label">Tags</span>
+                            <button type="button" id="addTagPattern" class="button secondary small">+ Add</button>
+                        </div>
+                        <div id="tagPatterns"></div>
+                    </div>
+                    <div class="pattern-group">
+                        <div class="group-head">
+                            <span class="field-label">Owner</span>
+                            <button type="button" id="addOwnerPattern" class="button secondary small">+ Add</button>
+                        </div>
+                        <div id="ownerPatterns"></div>
+                    </div>
                 </div>
             </section>
-        </div>
+        </main>
     </div>
     <script src="options.js"></script>
 </body>

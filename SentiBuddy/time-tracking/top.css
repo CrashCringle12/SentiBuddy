@@ -1,0 +1,78 @@
+/* Time tracking timer (see time-tracking/top.js). Bottom centre, just above the minimized Enhanced
+   Queue bar (which sits at bottom: 16px, ~40px tall), so neither covers the portal's corner buttons. */
+#sb-tt {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 64px;
+  z-index: 2147482000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  max-width: 280px;
+  border-radius: 8px;
+  background: #1b1a19;
+  color: #f3f2f1;
+  font: 13px/1.3 "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+#sb-tt button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+#sb-tt .sb-tt-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+#sb-tt .sb-tt-main { min-width: 0; flex: 1 1 auto; }
+#sb-tt .sb-tt-time { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sb-tt .sb-tt-dot { width: 8px; height: 8px; border-radius: 50%; background: #8a8886; flex: none; }
+#sb-tt[data-state="counting"] .sb-tt-dot { background: #13a10e; }
+#sb-tt[data-state="paused"] .sb-tt-dot,
+#sb-tt[data-state="idle"] .sb-tt-dot { background: #ffaa44; }
+#sb-tt[data-state="elsewhere"] .sb-tt-dot { background: #479ef5; }
+#sb-tt .sb-tt-pause {
+  padding: 0 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+#sb-tt .sb-tt-main:hover,
+#sb-tt .sb-tt-pause:hover { background: rgba(255, 255, 255, 0.08); }
+#sb-tt .sb-tt-details {
+  flex-basis: 100%;
+  padding: 6px 10px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+#sb-tt .sb-tt-details[hidden] { display: none; }
+#sb-tt .sb-tt-row { display: flex; justify-content: space-between; gap: 16px; padding: 2px 0; }
+#sb-tt .sb-tt-row strong { font-variant-numeric: tabular-nums; }
+#sb-tt .sb-tt-state { margin-top: 4px; color: #c8c6c4; font-size: 12px; }
+/* "+time" counted while away: above the timer, removable, shown for ~7s after coming back. */
+#sb-tt .sb-tt-away {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: #a4262c;
+  color: #fff;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+#sb-tt .sb-tt-away[hidden] { display: none; }
+#sb-tt .sb-tt-away-remove {
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 4px;
+  font-size: 12px;
+}
+#sb-tt .sb-tt-away-remove:hover { background: rgba(255, 255, 255, 0.15); }
+#sb-tt .sb-tt-sub { margin-top: 2px; color: #a19f9d; font-size: 11.5px; font-variant-numeric: tabular-nums; }

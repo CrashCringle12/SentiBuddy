@@ -61,7 +61,11 @@ function loadConfig() {
     filterTagsRegexPatterns: [],
     filterOwnerRegexPatterns: [],
     onlyAlertOnLatest: true,
-    desktopNotifications: true
+    desktopNotifications: true,
+    notifyOnMatchesOnly: false,
+    notificationRules: [],
+    enhancedQueueEnabled: true,
+    workspaceClientPattern: ''
   }, (items) => {
     config = {
       doRemoveFromFilteredFromQueue: items.doRemoveFromFilteredFromQueue,
@@ -69,13 +73,46 @@ function loadConfig() {
       filterTagsRegexPatterns: items.filterTagsRegexPatterns,
       filterOwnerRegexPatterns: items.filterOwnerRegexPatterns,
       onlyAlertOnLatest: items.onlyAlertOnLatest,
-      desktopNotifications: items.desktopNotifications
+      desktopNotifications: items.desktopNotifications,
+      notifyOnMatchesOnly: items.notifyOnMatchesOnly === true,
+      notificationRules: Array.isArray(items.notificationRules) ? items.notificationRules : [],
+      // While the Enhanced Queue is on it sends the desktop notifications (enhanced-queue/content.js),
+      // so the native-grid watcher here stays quiet to avoid duplicates.
+      enhancedQueueEnabled: items.enhancedQueueEnabled === true,
+      workspaceClientPattern: safeRegex(items.workspaceClientPattern)
     };
     doRemoveFromQueue = config.doRemoveFromFilteredFromQueue;
     console.log('Config loaded:', config);
   });
 }
 loadConfig();
+
+// Notification settings can change from the options page or a config sync; pick them up live.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
+  if (['notifyOnMatchesOnly', 'notificationRules', 'desktopNotifications', 'onlyAlertOnLatest', 'enhancedQueueEnabled',
+    'workspaceClientPattern'].some(k => k in changes)) {
+    loadConfig();
+  }
+});
+
+// With notifyOnMatchesOnly, an incident notifies only if its title or one of its tags matches a
+// notification rule ({ field: 'title' | 'tags', pattern }). Invalid patterns are skipped.
+function safeRegexTest(pattern, text) {
+  try { return new RegExp(pattern).test(text); } catch { return false; }
+}
+
+function matchesNotificationRules(info) {
+  // The whole cell text is checked too, in case the grid doesn't comma-separate the tags.
+  const tags = [String(info.tags || ''), ...String(info.tags || '').split(',').map(t => t.trim())].filter(Boolean);
+  return config.notificationRules.some((rule) => {
+    if (!rule || typeof rule.pattern !== 'string' || !rule.pattern) return false;
+    const field = String(rule.field || '').toLowerCase();
+    if (field === 'title') return safeRegexTest(rule.pattern, info.title);
+    if (field === 'tags' || field === 'tag') return tags.some(t => safeRegexTest(rule.pattern, t));
+    return false;
+  });
+}
 
 // ---- Shared utilities ------------------------------------------------------
 
@@ -290,8 +327,7 @@ const sentinelAdapter = {
       const next = container.nextElementSibling;
       if (!next) return;
       if (label.includes('Workspace')) {
-        const m = next.querySelector('article')?.textContent.trim().match(/xdrworkspace-(\w+)/);
-        workspace = m ? m[1] : '';
+        workspace = next.querySelector('article')?.textContent.trim() || '';
       } else if (label.includes('Description')) {
         description = next.querySelector('article')?.textContent.trim() || '';
       }
@@ -378,9 +414,18 @@ const adapter = PLATFORM === 'sentinel'
 
 // ---- Shared per-pass row processing ---------------------------------------
 
+function safeRegex(src) {
+  if (typeof src !== 'string' || !src) return null;
+  try { return new RegExp(src.slice(0, 300), 'i'); } catch { return null; }
+}
+
+// Client code via the workspaceClientPattern setting (named group "client" or group 1), else the
+// workspace name itself.
 function deriveClient(workspace) {
-  const parts = String(workspace ?? '').split('-');
-  return parts.length > 1 ? parts[1].toUpperCase() : workspace;
+  const ws = String(workspace ?? '');
+  const m = config.workspaceClientPattern?.exec(ws);
+  const code = m?.groups?.client ?? m?.[1];
+  return code ? code.toUpperCase() : ws;
 }
 
 function processQueue() {
@@ -429,7 +474,8 @@ function processQueue() {
         }
       };
 
-      if (eventType != 'NONE' && !matches && config.desktopNotifications && sendMessage) {
+      const wanted = !config.notifyOnMatchesOnly || matchesNotificationRules(info);
+      if (eventType != 'NONE' && !matches && wanted && config.desktopNotifications && !config.enhancedQueueEnabled && sendMessage) {
         if (config.onlyAlertOnLatest) sendMessage = false;
         chrome.runtime.sendMessage(message);
       }

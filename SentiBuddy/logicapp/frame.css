@@ -1,0 +1,27 @@
+/* "Add Try/Catch" item cloned into the Logic App designer's + menu */
+#sb-la-trycatch .sb-la-icon,
+#sb-la-surround .sb-la-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex: none;
+}
+
+#sb-la-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 2147483000;
+  max-width: min(560px, 90vw);
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #107c10;
+  color: #fff;
+  font: 600 13px "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+#sb-la-toast[hidden] { display: none; }
+#sb-la-toast.sb-la-warn { background: #8a5300; }
+#sb-la-toast.sb-la-error { background: #a4262c; }

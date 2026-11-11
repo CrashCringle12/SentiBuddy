@@ -92,8 +92,7 @@ width: 100%;
 }
 
 .nav {
-display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) auto auto;
+    display: flex;
     gap: 8px;
 margin-bottom: 12px;
     padding: 6px;
@@ -102,7 +101,13 @@ background: var(--surface-muted);
     border-radius: 12px;
 }
 
+.nav button[hidden] {
+    display: none;
+}
+
 .nav button {
+    flex: 1 1 0;
+    min-width: 0;
 border: 1px solid transparent;
     border-radius: 8px;
 background: transparent;
@@ -126,6 +131,7 @@ color: #ffffff;
 }
 #settingsBtn,
 #themeToggleBtn {
+    flex: 0 0 36px;
     width: 36px;
     min-width: 36px;
     font-size: 16px;
@@ -564,4 +570,344 @@ font-weight: 700;
       opacity: 1;
       transform: translateY(0);
   }
+}
+
+/* Time tracking (Time tab; see time-tracking/popup.js) */
+.tt-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tt-head input[type="date"] {
+    margin-left: auto;
+}
+
+.tt-totals {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.tt-total {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-muted);
+}
+
+.tt-total-label {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.tt-total strong {
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* Editable table: drag to reorder / merge, click hours to edit */
+.tt-table tr[draggable="true"] .tt-drag {
+    cursor: grab;
+}
+
+.tt-table tr.tt-dragging {
+    opacity: 0.4;
+}
+
+.tt-table tr.tt-drop-before td {
+    box-shadow: inset 0 2px 0 var(--accent, #0078D4);
+}
+
+.tt-table tr.tt-drop-after td {
+    box-shadow: inset 0 -2px 0 var(--accent, #0078D4);
+}
+
+.tt-table tr.tt-drop-merge td {
+    background: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent, #0078D4);
+}
+
+.tt-merged {
+    display: inline-block;
+    margin: 2px 0 0 4px;
+    padding: 0 5px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.tt-merged:hover {
+    color: var(--danger);
+}
+
+.tt-table .tt-edit {
+    cursor: text;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+
+.tt-table .tt-edited {
+    font-style: italic;
+    color: var(--accent, #0078D4);
+}
+
+.tt-hours-input {
+    width: 52px;
+    padding: 1px 3px;
+    border: 1px solid var(--accent, #0078D4);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    text-align: right;
+}
+
+.tt-table .tt-row-actions {
+    width: 1%;
+    padding-left: 2px;
+    padding-right: 4px;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.tt-row-btn {
+    padding: 0 4px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+}
+
+.tt-row-btn:hover {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.tt-diff-big {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.tt-metrics-box {
+    margin: 8px 0;
+    padding: 6px 8px;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+}
+
+.tt-metrics-box .tt-meta {
+    margin: 2px 0;
+}
+
+.tt-metrics-box code {
+    font-size: 11px;
+}
+
+.tt-email.is-debug {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.tt-compare {
+    padding: 4px 10px;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tt-compare:disabled {
+    border-color: var(--border);
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.tt-email {
+    flex: 1;
+    min-width: 0;
+    padding: 2px 4px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+}
+
+.tt-head .section-subtitle {
+    margin: 0;
+}
+
+.tt-head input[type="date"] {
+    width: auto;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-muted);
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+}
+
+.tt-state.is-counting {
+    color: #107C10;
+}
+
+.tt-state {
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tt-table-wrap {
+    max-height: 240px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.tt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.tt-table th,
+.tt-table td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.tt-table .tt-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.tt-table .tt-client {
+    cursor: pointer;
+}
+
+.tt-table .tt-client:hover {
+    background: var(--accent-soft);
+}
+
+.tt-table .tt-incident td {
+    padding-left: 22px;
+    color: var(--text-muted);
+}
+
+.tt-table .tt-empty {
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.tt-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.tt-link {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--link);
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.tt-muted {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.tt-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    margin-top: 6px;
+}
+
+.tt-meta .tt-link {
+    font-size: 12px;
+}
+
+.tt-meta .is-error {
+    color: var(--danger);
+}
+
+.tt-meta select {
+    margin-left: 4px;
+    padding: 2px 4px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface-muted);
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+}
+
+.tt-preview {
+    margin-left: auto;
+    opacity: 0.8;
+}
+
+.tt-table .tt-client {
+    cursor: default;
+}
+
+.tt-table .tt-client:hover {
+    background: none;
+}
+
+.tt-table .tt-expandable {
+    cursor: pointer;
+}
+
+.tt-table .tt-code {
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+
+.tt-table .tt-code-missing {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.tt-table .tt-code-set {
+    font-style: italic;
+}
+
+.tt-table .tt-expandable:hover {
+    background: var(--accent-soft);
 }

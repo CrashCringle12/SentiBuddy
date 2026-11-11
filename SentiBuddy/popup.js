@@ -26,8 +26,6 @@ let devData;
 let data;
 let clientTableSchema;
 let devTableSchema;
-let incidentLookbackEndpoint = '';
-let incidentTableSchemaFromConfig = null;
 const SAFE_URL_PROTOCOLS = ['https:'];
 
 function sanitizeUrl(url) {
@@ -62,6 +60,23 @@ function createLinkCell(href, text) {
   td.appendChild(a);
   return td;
 }
+
+// Middle-click / Ctrl+click on a table link: open it in a background tab ourselves. Chrome's
+// default opens it as the active tab, which takes focus away and closes the popup.
+function openTableLinkInBackground(e) {
+  const a = e.target.closest?.('table a[href]');
+  if (!a) return;
+  const url = sanitizeUrl(a.getAttribute('href'));
+  if (url === '#') return;
+  e.preventDefault();
+  chrome.tabs.create({ url, active: false });
+}
+document.addEventListener('auxclick', (e) => {
+  if (e.button === 1) openTableLinkInBackground(e);
+});
+document.addEventListener('click', (e) => {
+  if (e.button === 0 && (e.ctrlKey || e.metaKey)) openTableLinkInBackground(e);
+});
 
 const DEFAULT_TABLE_SCHEMAS = {
   data: {
@@ -231,7 +246,15 @@ function renderDevTable(filteredData) {
   renderRows('devTableBody', filteredData, devTableSchema || []);
 }
 
+// Tab names for the two reference tables: tableData.labels { data, devData } in the config.
+function applyTableLabels(labels) {
+  const pick = (v, fallback) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 24) : fallback);
+  document.getElementById('clientBtn').textContent = pick(labels?.data, 'Client Info');
+  document.getElementById('developmentBtn').textContent = pick(labels?.devData, 'Development');
+}
+
 function configureTableSchemas(tableDataConfig) {
+  applyTableLabels(tableDataConfig?.labels);
   const schemas = tableDataConfig?.schemas || {};
   clientTableSchema = resolveTableSchema('data', data, schemas.data);
   devTableSchema = resolveTableSchema('devData', devData, schemas.devData);
@@ -256,15 +279,10 @@ function extractIncidentLookbackEndpoint(config) {
   return '';
 }
 
-function extractIncidentTableSchema(config) {
-  if (!config || typeof config !== 'object') return null;
-  const schemas = config.tableData?.schemas || config.schemas || {};
-  return schemas.incidents || schemas.incident || null;
-}
-
 function applyMasterConfig(config) {
-  incidentLookbackEndpoint = extractIncidentLookbackEndpoint(config);
-  incidentTableSchemaFromConfig = extractIncidentTableSchema(config);
+  // time-tracking/popup.js: codes, client mapping, CSV format, and the metrics endpoint
+  // (timeTracking.metricsEndpoint, else the incident lookback endpoint, which now serves the metrics).
+  window.SentiBuddyTimeTracking?.setConfig(config, extractIncidentLookbackEndpoint(config));
 }
 
 var configDataURL = '';
@@ -320,28 +338,26 @@ async function fetchClientData() {
     renderDevTable(devData);
   }
   
+// Search whatever columns the table shows (field names come from the config, so nothing is
+// hardcoded): each column's displayed text plus its own value, so a link column with fixed text
+// like "Info" is still searchable by its value. With no resolved columns, every plain value counts.
+function rowMatchesQuery(row, columns, query) {
+  if (!query) return true;
+  const values = columns.length
+    ? columns.flatMap(column => [getCellText(row, column), row?.[column.key]])
+    : Object.values(row || {}).filter(v => v == null || typeof v !== 'object');
+  return values.some(v => v != null && String(v).toLowerCase().includes(query));
+}
+
 document.getElementById("searchBox").addEventListener("input", function () {
-  const query = this.value.toLowerCase();
-  const filtered = data.filter(item => {
-    // Search across multiple fields: code, client, department, lead, edr, contact
-    const searchFields = [
-      String(item?.code ?? ''),
-      String(item?.client ?? ''),
-      String(item?.department ?? ''),
-      String(item?.lead ?? ''),
-      String(item?.edr ?? ''),
-      String(item?.contact ?? '')
-    ];
-    return searchFields.some(field => field.toLowerCase().includes(query));
-  });
-  renderTable(filtered);
+  const query = this.value.trim().toLowerCase();
+  renderTable(getArrayOrEmpty(data).filter(item => rowMatchesQuery(item, clientTableSchema || [], query)));
 });
 
 
 document.getElementById("devSearchBox").addEventListener("input", function () {
-  const query = this.value.toLowerCase();
-  const filtered = devData.filter(item => String(item?.client ?? '').toLowerCase().includes(query));
-  renderDevTable(filtered);
+  const query = this.value.trim().toLowerCase();
+  renderDevTable(getArrayOrEmpty(devData).filter(item => rowMatchesQuery(item, devTableSchema || [], query)));
 });
 
 document.getElementById("revealBtn").addEventListener("click", function () {
@@ -444,9 +460,8 @@ document.getElementById("incidentsBtn").addEventListener("click", () => {
   refreshPortalEmail();
 });
 
-// --- Incident lookback tab -------------------------------------------------
+// --- Time tab: the user's email (sent to the metrics endpoint by time-tracking/popup.js) ---
 
-const INCIDENT_ARRAY_KEYS = ['incidents', 'rows', 'data', 'items', 'results'];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PORTAL_URL_PREFIX = 'https://portal.azure.com/';
 
@@ -466,6 +481,7 @@ function setLookbackEmail(value, tone, hint) {
   input.readOnly = true;
   input.placeholder = value ? '' : 'Detecting from Azure portal...';
   setEmailHint(hint || '', tone);
+  input.dispatchEvent(new Event('change')); // time-tracking/popup.js shows it
 }
 
 function requestPortalEmailFromTab(tabId) {
@@ -497,7 +513,7 @@ async function refreshPortalEmail() {
 
     const response = await requestPortalEmailFromTab(tab.id);
     if (response?.ok && EMAIL_PATTERN.test(response.email)) {
-      setLookbackEmail(response.email, 'success', `Auto-detected from Azure portal: ${response.email}`);
+      setLookbackEmail(response.email, 'success', '');
     } else {
       setLookbackEmail('', 'error', 'Failed to pull email. Open portal.azure.com and reopen this popup.');
     }
@@ -505,218 +521,6 @@ async function refreshPortalEmail() {
     console.error('Portal email lookup failed:', err);
     setLookbackEmail('', 'error', 'Failed to pull email. Open portal.azure.com and reopen this popup.');
   }
-}
-
-function getBrowserTimezone() {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-}
-
-function getSupportedTimezones() {
-  try {
-    if (typeof Intl.supportedValuesOf === 'function') {
-      const zones = Intl.supportedValuesOf('timeZone');
-      if (Array.isArray(zones) && zones.length) return zones;
-    }
-  } catch { /* fall through */ }
-  return [
-    'UTC', 'America/Los_Angeles', 'America/Denver', 'America/Chicago',
-    'America/New_York', 'America/Toronto', 'America/Sao_Paulo',
-    'Europe/London', 'Europe/Berlin', 'Europe/Madrid', 'Europe/Paris',
-    'Europe/Amsterdam', 'Europe/Athens', 'Africa/Johannesburg',
-    'Asia/Dubai', 'Asia/Kolkata', 'Asia/Singapore', 'Asia/Hong_Kong',
-    'Asia/Tokyo', 'Australia/Sydney', 'Pacific/Auckland'
-  ];
-}
-
-function populateTimezoneSelect() {
-  const select = document.getElementById('lookbackTimezone');
-  if (!select || select.dataset.populated === 'true') return;
-
-  const zones = getSupportedTimezones();
-  const browserZone = getBrowserTimezone();
-  const fragment = document.createDocumentFragment();
-
-  zones.forEach(zone => {
-    const option = document.createElement('option');
-    option.value = zone;
-    option.textContent = zone;
-    fragment.appendChild(option);
-  });
-
-  select.appendChild(fragment);
-  if (zones.includes(browserZone)) {
-    select.value = browserZone;
-  }
-  select.dataset.populated = 'true';
-}
-
-function setIncidentStatus(message, tone) {
-  const el = document.getElementById('incidentStatus');
-  if (!el) return;
-  el.textContent = message || '';
-  el.classList.remove('is-success', 'is-error');
-  if (tone === 'success') el.classList.add('is-success');
-  if (tone === 'error') el.classList.add('is-error');
-}
-
-function findIncidentRows(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (!payload || typeof payload !== 'object') return [];
-
-  for (const key of INCIDENT_ARRAY_KEYS) {
-    if (Array.isArray(payload[key])) return payload[key];
-  }
-  if (Array.isArray(payload?.tableData?.incidents)) return payload.tableData.incidents;
-  if (Array.isArray(payload?.tableData?.data)) return payload.tableData.data;
-  return [];
-}
-
-function findIncidentSchema(payload) {
-  if (!payload || typeof payload !== 'object') return null;
-  return payload.schema
-    || payload.schemas?.incidents
-    || payload.tableData?.schemas?.incidents
-    || incidentTableSchemaFromConfig
-    || null;
-}
-
-function renderIncidentResults(payload) {
-  const resultsEl = document.getElementById('incidentResults');
-  if (!resultsEl) return;
-
-  const rows = findIncidentRows(payload);
-  if (!rows.length) {
-    resultsEl.style.display = 'none';
-    return;
-  }
-
-  const columns = resolveTableSchema('incidents', rows, findIncidentSchema(payload));
-  renderTableHeaders('incidentTableHead', columns);
-  renderRows('incidentTableBody', rows, columns);
-  resultsEl.style.display = 'block';
-}
-
-function clearIncidentResults() {
-  const resultsEl = document.getElementById('incidentResults');
-  if (!resultsEl) return;
-  resultsEl.style.display = 'none';
-  const head = document.getElementById('incidentTableHead');
-  const body = document.getElementById('incidentTableBody');
-  if (head) head.innerHTML = '';
-  if (body) body.innerHTML = '';
-}
-
-async function submitIncidentLookback() {
-  const hoursInput = document.getElementById('lookbackHours');
-  const tzSelect = document.getElementById('lookbackTimezone');
-  const emailInput = document.getElementById('lookbackEmail');
-  const submitBtn = document.getElementById('submitLookback');
-  if (!hoursInput || !tzSelect || !emailInput) return;
-
-  const hours = Number(hoursInput.value);
-  const timezone = tzSelect.value;
-  const email = emailInput.value.trim();
-
-  if (!Number.isFinite(hours) || hours <= 0) {
-    setIncidentStatus('Enter a positive number of hours to look back.', 'error');
-    return;
-  }
-  if (!timezone) {
-    setIncidentStatus('Select a timezone.', 'error');
-    return;
-  }
-  if (!EMAIL_PATTERN.test(email)) {
-    setIncidentStatus('Failed to pull email. Open portal.azure.com in the active tab and reopen this popup.', 'error');
-    return;
-  }
-  if (!incidentLookbackEndpoint) {
-    setIncidentStatus('Incident lookback endpoint is not configured. Add "incidentLookbackEndpoint" to the master config.', 'error');
-    return;
-  }
-
-  let safeEndpoint;
-  try {
-    const parsed = new URL(incidentLookbackEndpoint);
-    if (parsed.protocol !== 'https:') {
-      setIncidentStatus('Incident lookback endpoint must be an https URL.', 'error');
-      return;
-    }
-    safeEndpoint = parsed.href;
-  } catch {
-    setIncidentStatus('Incident lookback endpoint is not a valid URL.', 'error');
-    return;
-  }
-
-  clearIncidentResults();
-  setIncidentStatus('Sending request...');
-  if (submitBtn && typeof submitBtn.setAttribute === 'function') {
-    submitBtn.setAttribute('disabled', 'true');
-  }
-
-  try {
-    const response = await fetch(safeEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        lookbackHours: hours,
-        timezone,
-        email
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`);
-    }
-
-    let payload = null;
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      try {
-        payload = await response.json();
-      } catch {
-        payload = null;
-      }
-    }
-
-    setIncidentStatus('Email will be sent shortly.', 'success');
-    if (payload) renderIncidentResults(payload);
-  } catch (error) {
-    console.error('Incident lookback request failed:', error);
-    setIncidentStatus(`Request failed: ${error?.message || 'unknown error'}`, 'error');
-  } finally {
-    if (submitBtn && typeof submitBtn.removeAttribute === 'function') {
-      submitBtn.removeAttribute('disabled');
-    }
-  }
-}
-
-function initIncidentLookbackTab() {
-  populateTimezoneSelect();
-
-  const submitBtn = document.getElementById('submitLookback');
-  if (submitBtn && !submitBtn.dataset.bound) {
-    submitBtn.dataset.bound = 'true';
-    submitBtn.addEventListener('click', () => {
-      submitIncidentLookback();
-    });
-  }
-
-  const hoursEl = document.getElementById('lookbackHours');
-  if (hoursEl && hoursEl.dataset.enterBound !== 'true') {
-    hoursEl.dataset.enterBound = 'true';
-    hoursEl.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        submitIncidentLookback();
-      }
-    });
-  }
-
-  refreshPortalEmail();
 }
 
 // Close modal when clicking outside of it
@@ -1018,11 +822,16 @@ function applyPopupTheme(theme) {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-   chrome.storage.local.get({ lastPopupTab: 'client' }, (result) => {
-        showTab(result.lastPopupTab);
+   // Time tracking is experimental: its tab and the portal-timer button only show with experimental
+   // features on (time is still recorded in the background).
+   chrome.storage.local.get({ lastPopupTab: 'client', toggleExperiments: false }, (result) => {
+        const experimental = result.toggleExperiments === true;
+        document.getElementById('incidentsBtn').hidden = !experimental;
+        if (timerToggleButton) timerToggleButton.style.display = experimental ? '' : 'none';
+        showTab(!experimental && result.lastPopupTab === 'incidents' ? 'client' : result.lastPopupTab);
     });
 
-  initIncidentLookbackTab();
+  refreshPortalEmail();
     
     // Check the current state of the queue filtering
     chrome.runtime.sendMessage({ type: 'get-queue-state' }, (response) => {
@@ -1195,8 +1004,7 @@ function updateEnhancedQueueButton(active) {
 }
 
 if (enhancedQueueButton) {
-    chrome.storage.local.get({ toggleExperiments: false, enhancedQueueEnabled: false }, (items) => {
-        enhancedQueueButton.style.display = items.toggleExperiments ? '' : 'none';
+    chrome.storage.local.get({ enhancedQueueEnabled: true }, (items) => {
         updateEnhancedQueueButton(items.enhancedQueueEnabled);
     });
 
@@ -1230,10 +1038,10 @@ if (timerToggleButton) {
 function updateTimerCountButton(visible) {
     if (!timerToggleButton) return;
     if (visible) {
-        timerToggleButton.setText('Timer/Count: On');
+        timerToggleButton.setText('Timer: On');
         timerToggleButton.setColor('#107C10');
     } else {
-        timerToggleButton.setText('Timer/Count: Off');
+        timerToggleButton.setText('Timer: Off');
         timerToggleButton.setColor('#D83B01');
     }
 }

@@ -1,0 +1,41 @@
+/* Book icon after "Incident number N" (see incident-docs/top.js) */
+.sb-doc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  vertical-align: middle;
+  border-radius: 4px;
+  color: inherit;
+  opacity: 0.85;
+  text-decoration: none;
+}
+.sb-doc-icon:hover,
+.sb-doc-icon:focus-visible {
+  opacity: 1;
+  background: rgba(127, 127, 127, 0.18);
+  outline: none;
+}
+
+.sb-doc-title { cursor: pointer; }
+.sb-doc-title:hover,
+.sb-doc-title:focus-visible { text-decoration: underline; text-underline-offset: 3px; outline: none; }
+
+#sb-doc-tip {
+  position: fixed;
+  z-index: 2147483000;
+  max-width: min(560px, 90vw);
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #1b1a19;
+  color: #f3f2f1;
+  font: 12px/1.4 "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+}
+#sb-doc-tip[hidden] { display: none; }
+#sb-doc-tip .sb-doc-tip-title { font-weight: 600; margin-bottom: 4px; }
+#sb-doc-tip .sb-doc-tip-label { color: #c8c6c4; font-weight: 600; }
+#sb-doc-tip .sb-doc-tip-url { word-break: break-all; color: #9cc5ff; }

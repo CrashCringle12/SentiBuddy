@@ -24,9 +24,19 @@
 .sb-playbook-btn:hover { filter: brightness(0.9); }
 .sb-playbook-btn:active { filter: brightness(0.8); }
 .sb-playbook-btn:focus-visible { outline: 2px solid var(--sb-pb-text); outline-offset: -4px; }
-.sb-playbook-btn .sb-escalate-icon { width: 16px; height: 16px; flex: none; border-radius: 3px; }
+.sb-playbook-btn .sb-playbook-icon { width: 16px; height: 16px; flex: none; border-radius: 3px; }
 .sb-playbook-btn .sb-playbook-glyph { font-size: 13px; line-height: 1; }
 .sb-playbook-btn.sb-playbook-more { --sb-pb-color: #3b3a39; }
+
+/* Old incident experience: buttons sit in their own bar above the Timeline / … / Comments tabs. */
+.sb-pb-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 10px;
+}
+.sb-pb-bar .sb-playbook-btn { margin-left: 0; }
 
 #sb-pb-menu {
   position: fixed;

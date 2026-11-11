@@ -1,13 +1,13 @@
 {
     "name": "Senti Buddy",
-    "version": "4.1",
+    "version": "5.0",
     "description": "Browser Extension to enable Filtering & Desktop Notifications for Sentinel — Toggle with ALT+A . ALT+C to access config.",
     "author": {
         "email": "cringlebox@gmail.com"
     },
     "options_ui": {
       "page": "options.html",
-      "open_in_tab": false
+      "open_in_tab": true
     },
     "manifest_version": 3,
     "permissions": [
@@ -17,7 +17,9 @@
       "webRequest",
       "clipboardRead",
       "storage",
-      "favicon"
+      "favicon",
+      "idle",
+      "alarms"
     ],
     "action": {
       "default_popup": "popup.html"
@@ -58,6 +60,7 @@
   "host_permissions": [
     "https://management.azure.com/*",
     "https://portal.azure.com/*",
+    "https://*.reactblade.portal.azure.net/*",
     "https://mto.security.microsoft.com/*",
      "https://security.microsoft.com/*"
   ],
@@ -72,23 +75,30 @@
           "https://api11.scamalytics.com/*"
         ],
         "css": ["css/core.css"],
-        "js": ["core.js", "scripts/timer-script.js"],
+        "js": ["core.js"],
         "run_at": "document_end",
         "all_frames": true
       },
       {
         "matches": ["https://portal.azure.com/*"],
-        "css": ["enhanced-queue/panel.css", "escalate/top.css"],
-        "js": ["enhanced-queue/content.js", "escalate/top.js"],
+        "css": ["enhanced-queue/panel.css", "playbooks/top.css", "incident-docs/top.css", "playbooks/frame.css", "comments/frame.css", "time-tracking/top.css"],
+        "js": ["enhanced-queue/content.js", "playbooks/top.js", "incident-docs/top.js", "playbooks/frame.js", "comments/frame.js", "time-tracking/top.js"],
         "run_at": "document_start",
         "all_frames": false
       },
       {
         "matches": ["https://*.reactblade.portal.azure.net/*"],
-        "css": ["escalate/frame.css", "comments/frame.css"],
-        "js": ["escalate/frame.js", "comments/frame.js"],
+        "css": ["playbooks/frame.css", "comments/frame.css", "logicapp/frame.css"],
+        "js": ["playbooks/frame.js", "comments/frame.js", "logicapp/frame.js"],
         "run_at": "document_idle",
         "all_frames": true
+      },
+      {
+        "matches": ["https://*.reactblade.portal.azure.net/*"],
+        "js": ["logicapp/page.js"],
+        "run_at": "document_idle",
+        "all_frames": true,
+        "world": "MAIN"
       }
     ],
     "background": {
@@ -106,7 +116,7 @@
         },
         {
           "resources": ["icon.png"],
-          "matches": ["https://*.reactblade.portal.azure.net/*"]
+          "matches": ["https://*.reactblade.portal.azure.net/*", "https://portal.azure.com/*"]
         }
       ],
     "icons": {

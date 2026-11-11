@@ -154,6 +154,10 @@
   position: relative;
 }
 #sb-comments-view .sbc-tool:hover { background: var(--sbc-hover); }
+/* Reload icon spins while comments are being re-fetched; the existing list stays visible. */
+#sb-comments-view .sbc-reload-icon { display: inline-block; }
+#sb-comments-view .sbc-loading .sbc-reload-icon { animation: sbc-spin 0.9s linear infinite; color: var(--sbc-accent); }
+@keyframes sbc-spin { to { transform: rotate(360deg); } }
 #sb-comments-view .sbc-dropdown {
   position: absolute; top: 100%; left: 0; z-index: 10000;
   background: var(--sbc-panel); border: 1px solid var(--sbc-border);
@@ -174,11 +178,29 @@
   border-radius: 2px; cursor: pointer; background-clip: padding-box;
 }
 #sb-comments-view .sbc-color-swatch:hover { opacity: 0.8; }
-#sb-comments-view .sbc-input, #sb-comments-view .sbc-preview {
-  width: 100%;
-  height: 220px;
+/* Editor: write (left) + live preview (right). The container is what resizes (drag its bottom-right
+   corner); both panes fill it. Stacks vertically when the view is narrow. */
+#sb-comments-view .sbc-editor {
+  display: flex;
+  gap: 12px;
+  height: 240px;
   min-height: 120px;
   max-height: 70vh;
+  resize: vertical;
+  overflow: hidden;
+}
+#sb-comments-view .sbc-pane { flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+#sb-comments-view .sbc-pane-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--sbc-muted);
+}
+@media (max-width: 760px) {
+  #sb-comments-view .sbc-editor { flex-direction: column; height: 380px; }
+}
+#sb-comments-view .sbc-input, #sb-comments-view .sbc-preview {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
   padding: 10px 12px;
   border: 1px solid var(--sbc-border);
   border-bottom-color: var(--sbc-muted);
@@ -186,10 +208,17 @@
   background: var(--sbc-input);
   color: var(--sbc-text);
   font: inherit; font-size: 14px; line-height: 1.5;
-  resize: vertical;
+  resize: none;
   outline: none;
   overflow: auto;
 }
+/* The preview looks like a posted comment in the log. */
+#sb-comments-view .sbc-preview {
+  background: var(--sbc-bubble);
+  border-color: var(--sbc-bubble-border);
+  font-size: 13px;
+}
+#sb-comments-view .sbc-preview-empty { color: var(--sbc-muted); font-style: italic; }
 #sb-comments-view .sbc-input::placeholder { color: var(--sbc-muted); }
 #sb-comments-view .sbc-input:focus { border-bottom: 2px solid var(--sbc-focus); }
 #sb-comments-view .sbc-muted { color: var(--sbc-muted); font-size: 12px; }

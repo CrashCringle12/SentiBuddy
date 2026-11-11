@@ -1,11 +1,14 @@
-// Comments tab (runs inside the portal's React view iframes, *.reactblade.portal.azure.net).
-// Adds a third tab next to Overview / Entities on the incident details page with a large comment
-// composer and the activity log (comments + status/owner/severity changes) above it.
+// "Comments+" tab on the incident details page: a large comment composer with the activity log above it.
+//   new experience: inside the portal's React view iframe, a third tab after Overview / Entities
+//   old experience: in the top portal frame, after the native Timeline / … / Comments tabs
+// The same script runs in both places and only acts on the experience that renders there.
 //
-// The view is an overlay appended to <html>, positioned over the tab content area, so React's
+// The view is an overlay appended to <html>, positioned over the tab content area, so the portal's
 // own tree is never modified beyond inserting the tab button.
 (() => {
+  const IS_TOP = window.top === window;
   const TAB_ID = 'sb-comments-tab';
+  const TAB_LABEL = 'Comments+';
   const VIEW_ID = 'sb-comments-view';
   const MAX_CHARS = 30000;
 
@@ -17,10 +20,12 @@
 
   // Activity log sources, mirroring Sentinel's filters. Each is a separate request, so only
   // Comments loads by default; the others load the first time their chip is switched on.
+  // Activities and Automation health are hidden until their workspace queries are reworked (they
+  // don't load reliably through the ARM query proxy); uncomment to bring the chips back.
   const SOURCES = [
-    { key: 'comments', label: 'Comments', op: 'comments', dot: 'var(--sbc-accent)' },
-    { key: 'activities', label: 'Activities', op: 'history', dot: 'var(--sbc-muted)' },
-    { key: 'automation', label: 'Automation health', op: 'automation', dot: '#8764b8' }
+    { key: 'comments', label: 'Comments', op: 'comments', dot: 'var(--sbc-accent)' }
+    // { key: 'activities', label: 'Activities', op: 'history', dot: 'var(--sbc-muted)' },
+    // { key: 'automation', label: 'Automation health', op: 'automation', dot: '#8764b8' }
   ];
   const enabledSources = new Set(['comments']); // kept across incidents while the frame lives
   let sources = freshSources();
@@ -39,15 +44,17 @@
   }
   const op = (name, extra) => send({ type: 'incident-op', op: name, incidentArmId, ...extra });
 
-  // Route updates are shared with escalate/frame.js (top frame owns the URL).
+  // Route updates are shared with playbooks/frame.js (top frame owns the URL).
+  // Each copy only handles its own experience: the top frame the old one, React frames the new one.
+  const mine = (id, view) => ((IS_TOP ? view === 'old' : view !== 'old') && id) || null;
   function queryRoute() {
-    chrome.runtime.sendMessage({ type: 'escalate-frame-query' }, (res) => {
+    chrome.runtime.sendMessage({ type: 'incident-frame-query' }, (res) => {
       void chrome.runtime.lastError;
-      setIncident(res?.incidentArmId || null);
+      setIncident(mine(res?.incidentArmId, res?.view));
     });
   }
   chrome.runtime.onMessage.addListener((msg) => {
-    if (msg?.type === 'escalate-route') setIncident(msg.incidentArmId || null);
+    if (msg?.type === 'incident-route') setIncident(mine(msg.incidentArmId, msg.view));
   });
 
   function setIncident(id) {
@@ -73,22 +80,29 @@
   }
   const tabLabel = (t) => (t.textContent || '').replace(/\s+/g, ' ').trim();
 
-  // The Overview/Entities tab strip. Fluent tabs render their label twice (visible + reserved
-  // space), so match on "starts with" after collapsing.
+  // The incident's tab strip; `after` is the native tab ours goes after. Tabs render their label
+  // twice (visible + reserved space), so match on "starts with" after collapsing.
+  //   new (React):     Overview / Entities          → after Entities
+  //   old (Knockout):  Timeline / … / Comments       → after Comments
   function findTabs() {
     for (const list of document.querySelectorAll('[role="tablist"]')) {
       const tabs = [...list.querySelectorAll('[role="tab"]')].filter(t => t.id !== TAB_ID);
-      const overview = tabs.find(t => /^overview/i.test(tabLabel(t)));
-      const entities = tabs.find(t => /^entities/i.test(tabLabel(t)));
-      if (overview && entities) return { list, tabs, overview, entities };
+      const named = (re) => tabs.find(t => re.test(tabLabel(t)));
+      if (IS_TOP) {
+        const comments = named(/^comments/i);
+        if (named(/^timeline/i) && comments) return { list, tabs, after: comments };
+      } else {
+        const entities = named(/^entities/i);
+        if (named(/^overview/i) && entities) return { list, tabs, after: entities };
+      }
     }
     return null;
   }
 
   // Build our tab by cloning a native unselected tab so it matches Sentinel's styling exactly.
-  // A cloned node carries no React handlers.
+  // A cloned node carries no React/Knockout handlers.
   function buildTab(found) {
-    const template = found.tabs.find(t => t.getAttribute('aria-selected') !== 'true') || found.entities;
+    const template = found.tabs.find(t => t.getAttribute('aria-selected') !== 'true') || found.after;
     const tab = template.cloneNode(true);
     tab.id = TAB_ID;
     tab.setAttribute('aria-selected', 'false');
@@ -98,19 +112,25 @@
     const walker = document.createTreeWalker(tab, NodeFilter.SHOW_TEXT);
     const texts = [];
     while (walker.nextNode()) texts.push(walker.currentNode);
-    // Fluent renders the label in more than one span (visible + reserved width); rename them all.
-    texts.forEach(t => { if (t.nodeValue.trim()) t.nodeValue = 'Comments'; });
-    if (!texts.some(t => t.nodeValue === 'Comments')) tab.textContent = 'Comments';
-    // SentiBuddy icon inline before each label copy (keeps Fluent's reserved width in step).
+    // Tabs render the label in more than one span (visible + reserved width); rename them all.
+    texts.forEach(t => { if (t.nodeValue.trim()) t.nodeValue = TAB_LABEL; });
+    if (!texts.some(t => t.nodeValue === TAB_LABEL)) tab.textContent = TAB_LABEL;
+    // SentiBuddy icon inline before each label copy (keeps the reserved width in step).
     const walker2 = document.createTreeWalker(tab, NodeFilter.SHOW_TEXT);
     const labels = [];
-    while (walker2.nextNode()) if (walker2.currentNode.nodeValue === 'Comments') labels.push(walker2.currentNode);
+    while (walker2.nextNode()) if (walker2.currentNode.nodeValue === TAB_LABEL) labels.push(walker2.currentNode);
     labels.forEach(t => {
       const icon = document.createElement('img');
       icon.className = 'sb-comments-tab-icon';
       icon.src = chrome.runtime.getURL('icon.png');
       icon.alt = '';
       icon.setAttribute('aria-hidden', 'true');
+      // Inline !important: the old experience's portal styles (top frame) override frame.css here.
+      // Visibility is deliberately left inherited: the label's hidden width-reserving copy must keep
+      // its icon hidden too, or the two icons overlap.
+      for (const [prop, value] of Object.entries({ display: 'inline-block', width: '16px', height: '16px',
+        'max-width': 'none', 'margin-right': '6px', 'vertical-align': '-3px', 'border-radius': '3px'
+      })) icon.style.setProperty(prop, value, 'important');
       t.parentNode.insertBefore(icon, t);
     });
     tab.addEventListener('click', (e) => {
@@ -129,6 +149,12 @@
 
   let seenTabs = false;
   function sync() {
+    // Top frame: nothing to look for unless an old-experience incident is open (route-driven).
+    if (IS_TOP && !incidentArmId) {
+      document.getElementById(TAB_ID)?.remove();
+      if (active) deactivate();
+      return;
+    }
     const found = findTabs();
     if (found && !seenTabs) queryRoute();
     seenTabs = !!found;
@@ -139,9 +165,9 @@
       if (active) deactivate();
       return;
     }
-    if (!tab || tab.parentElement !== found.entities.parentElement || tab.previousElementSibling !== found.entities) {
+    if (!tab || tab.parentElement !== found.after.parentElement || tab.previousElementSibling !== found.after) {
       tab = tab || buildTab(found);
-      found.entities.insertAdjacentElement('afterend', tab);
+      found.after.insertAdjacentElement('afterend', tab);
     }
     if (!found.list.dataset.sbWatch) {
       found.list.dataset.sbWatch = '1';
@@ -247,6 +273,7 @@
     if (!view) {
       view = buildView();
       document.documentElement.appendChild(view);
+      applyPreviewVisibility();
     }
     applyTheme(view);
     view.hidden = false;
@@ -260,12 +287,24 @@
     renderLog();
     loadDraft();
     view.querySelector('textarea').focus();
-    enabledSources.forEach(k => { if (!sources[k].loading) loadSource(k); });
+    refreshSources();
+    clearInterval(refreshTimer);
+    refreshTimer = setInterval(() => { if (!document.hidden) refreshSources(); }, REFRESH_MS);
   }
+
+  // Comments can be added or edited elsewhere (Sentinel's own activity log, other analysts), so
+  // reload while the tab is open: every REFRESH_MS and whenever the page becomes visible again.
+  const REFRESH_MS = 30000;
+  let refreshTimer = null;
+  function refreshSources() {
+    enabledSources.forEach(k => loadSource(k));
+  }
+  document.addEventListener('visibilitychange', () => { if (active && !document.hidden) refreshSources(); });
 
   function deactivate() {
     active = false;
     clearInterval(posTimer);
+    clearInterval(refreshTimer);
     const view = document.getElementById(VIEW_ID);
     if (view) view.hidden = true;
     restoreLook();
@@ -279,7 +318,9 @@
       class: 'sbc-input', placeholder: 'Write a comment…',
       spellcheck: 'true', maxlength: String(MAX_CHARS),
       oninput: () => { updateCount(); saveDraftSoon(); },
-      onkeydown: onComposerKey
+      onkeydown: onComposerKey,
+      onpaste: onComposerPaste,
+      onscroll: syncPreviewScroll
     });
     const toolbarBtn = (label, title, fn) => el('button', { type: 'button', class: 'sbc-tool', title, onclick: (e) => { e.preventDefault(); fn(); textarea.focus(); } }, label);
     const HEADER_OPTS = [
@@ -369,8 +410,8 @@
         el('span', { class: 'sbc-log-title', text: 'Activity log' }),
         el('div', { class: 'sbc-chips', 'data-role': 'chips' }),
         el('span', { class: 'sbc-spacer' }),
-        el('button', { type: 'button', class: 'sbc-tool', title: 'Reload activity',
-          onclick: () => enabledSources.forEach(k => loadSource(k)) }, '⟳')
+        el('button', { type: 'button', class: 'sbc-tool', 'data-role': 'reload', title: 'Reload activity',
+          onclick: () => enabledSources.forEach(k => loadSource(k)) }, el('span', { class: 'sbc-reload-icon', text: '⟳' }))
       ),
       el('div', { class: 'sbc-log', 'data-role': 'log' }),
       el('div', { class: 'sbc-composer' },
@@ -404,15 +445,21 @@
           ),
           el('div', { class: 'sbc-toolbar-group' },
             toolbarBtn('"', 'Blockquote', () => prefixLines('> ')),
-            toolbarBtn('{ }', 'Code block', () => wrap('\n```\n', '\n```\n')),
-            toolbarBtn('</>', 'Inline code', () => wrap('`', '`')),
+            toolbarBtn('</>', 'Code block (type `backticks` for inline code)', () => wrap('\n```\n', '\n```\n')),
             toolbarBtn('✕', 'Clear formatting', clearFormatting)
           ),
           el('span', { class: 'sbc-spacer' }),
-          el('button', { type: 'button', class: 'sbc-tool', 'data-role': 'preview-btn', title: 'Preview how the comment will look', onclick: togglePreview }, 'Preview')
+          el('button', { type: 'button', class: 'sbc-tool', 'data-role': 'preview-btn', onclick: togglePreview }, 'Preview')
         ),
-        textarea,
-        el('div', { class: 'sbc-preview', 'data-role': 'preview', hidden: '' }),
+        // Side-by-side editor: what you type on the left, how it will look once posted on the right.
+        el('div', { class: 'sbc-editor', 'data-role': 'editor' },
+          el('div', { class: 'sbc-pane' },
+            el('div', { class: 'sbc-pane-label', text: 'Write' }),
+            textarea),
+          el('div', { class: 'sbc-pane', 'data-role': 'preview-pane' },
+            el('div', { class: 'sbc-pane-label', text: 'Preview' }),
+            el('div', { class: 'sbc-preview sbc-body', 'data-role': 'preview' }))
+        ),
         el('div', { class: 'sbc-footer' },
           el('span', { 'data-role': 'count', class: 'sbc-muted' }),
           el('span', { 'data-role': 'status', class: 'sbc-status' }),
@@ -489,6 +536,7 @@
     const c = $('[data-role="count"]');
     c.textContent = `${n.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`;
     c.classList.toggle('sbc-warn', n > MAX_CHARS * 0.9);
+    schedulePreview(); // every edit path (typing, toolbar, draft restore, post) goes through here
   }
   function setStatus(text, kind) {
     const s = $('[data-role="status"]');
@@ -497,18 +545,270 @@
     s.className = `sbc-status${kind ? ` sbc-${kind}` : ''}`;
   }
 
+  // ---------- Rich paste (OneNote, Word, web pages). The editor is a plain textarea, so HTML on the
+  // clipboard is converted into the editor's own syntax: formatting survives, stays editable and
+  // shows in the live preview. Plain-text pastes (and Ctrl+Shift+V) are left to the browser.
+  function onComposerPaste(e) {
+    if (!e.isTrusted) return;
+    const html = e.clipboardData?.getData('text/html');
+    if (!html) return;
+    let text;
+    try { text = htmlToEditorText(html); } catch { return; } // fall back to the browser's plain paste
+    if (!text) return;
+    e.preventDefault();
+    const ta = e.currentTarget;
+    ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end');
+    updateCount(); saveDraftSoon();
+  }
+
+  const PASTE_SKIP = new Set(['STYLE', 'SCRIPT', 'META', 'TITLE', 'HEAD', 'LINK', 'XML', 'TEMPLATE', 'IMG', 'SVG', 'OBJECT', 'IFRAME']);
+  const PASTE_BLOCK = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'LI', 'TABLE', 'PRE', 'BLOCKQUOTE',
+    'HR', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'ASIDE', 'NAV', 'FIGURE', 'DL', 'DT', 'DD', 'ADDRESS']);
+  const colorCtx = document.createElement('canvas').getContext('2d');
+
+  // Any CSS color (hex, rgb(), names like OneNote's "yellow") → #rrggbb, or null.
+  function toHex(value) {
+    const v = String(value || '').trim().toLowerCase().replace(/\s*!important$/, '');
+    if (!v || /^(transparent|inherit|initial|unset|currentcolor|auto|windowtext|none)$/.test(v) || v.startsWith('var(')) return null;
+    colorCtx.fillStyle = '#010203';
+    colorCtx.fillStyle = v;
+    const out = colorCtx.fillStyle;
+    if (out === '#010203' && v !== '#010203') return null; // not a color
+    return /^#[0-9a-f]{6}$/i.test(out) ? out : null; // translucent colors come back as rgba(): skip
+  }
+
+  // Inline style attribute → { prop: value } (manual parse so mso-* properties survive).
+  function styleOf(node) {
+    const out = {};
+    (node.getAttribute('style') || '').split(';').forEach(d => {
+      const i = d.indexOf(':');
+      if (i > 0) out[d.slice(0, i).trim().toLowerCase()] = d.slice(i + 1).trim().toLowerCase();
+    });
+    return out;
+  }
+
+  // Formatting an element applies itself (tags, OneNote/Word inline styles, <font color>).
+  function formatsOf(node) {
+    const tag = node.tagName;
+    const st = styleOf(node);
+    const deco = `${st['text-decoration'] || ''} ${st['text-decoration-line'] || ''}`;
+    const weight = st['font-weight'] || '';
+    const href = tag === 'A' ? (node.getAttribute('href') || '') : '';
+    let bg = toHex(st['background-color']) || toHex(st['mso-highlight']);
+    if (!bg && st.background && !/url\(/.test(st.background)) bg = toHex(st.background.split(/\s+/)[0]);
+    return {
+      bold: /^(B|STRONG)$/.test(tag) || /^(bold|bolder|[6-9]00)$/.test(weight),
+      italic: /^(I|EM)$/.test(tag) || st['font-style'] === 'italic',
+      underline: tag === 'U' || /underline/.test(deco),
+      strike: /^(S|STRIKE|DEL)$/.test(tag) || /line-through/.test(deco),
+      code: /^(CODE|KBD|SAMP|TT)$/.test(tag) || /consolas|courier|monospace/.test(st['font-family'] || ''),
+      color: toHex(st.color || node.getAttribute('color')),
+      bg,
+      link: /^https:\/\/\S+$/i.test(href) ? href.replace(/[()\s]/g, c => encodeURIComponent(c)) : null
+    };
+  }
+
+  // Formatting inherited by children; colors only count when they differ from plain black/white.
+  function childCtx(node, ctx) {
+    const f = formatsOf(node);
+    const color = f.color && f.color !== '#000000' ? f.color : (f.color ? null : ctx.color);
+    const bg = f.bg && f.bg !== '#ffffff' ? f.bg : (f.bg ? null : ctx.bg);
+    return {
+      bold: ctx.bold || f.bold, italic: ctx.italic || f.italic, underline: ctx.underline || f.underline,
+      strike: ctx.strike || f.strike, code: ctx.code || f.code, link: ctx.link || f.link, color, bg
+    };
+  }
+
+  // Wrap each non-empty line in markers, keeping edge whitespace outside them (markers can't span lines).
+  function wrapEach(s, open, close) {
+    return s.split('\n').map(seg => {
+      const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(seg);
+      return m[2] ? `${m[1]}${open}${m[2]}${close}${m[3]}` : seg;
+    }).join('\n');
+  }
+  const oneLine = (s) => s.replace(/\s*\n\s*/g, ' ').trim();
+
+  // Inline conversion of a node. Bold/italic/etc. wrap at the element that turns them on; colors
+  // wrap each text run so color markers never nest.
+  function pasteInline(node, ctx) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      let t = node.nodeValue.replace(/[\s ]+/g, ' ');
+      if (!t.trim()) return t;
+      if (ctx.color && !ctx.code && !t.includes('}')) t = wrapEach(t, `{color:${ctx.color}:`, '}');
+      if (ctx.bg && !ctx.code && !t.includes('}')) t = wrapEach(t, `{bg:${ctx.bg}:`, '}');
+      return t;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    const tag = node.tagName.toUpperCase();
+    if (PASTE_SKIP.has(tag)) return '';
+    if (tag === 'BR') return '\n';
+    const inner = ctx2 => [...node.childNodes].map(c => pasteInline(c, ctx2)).join('');
+    const cc = childCtx(node, ctx);
+    let s = inner(cc);
+    if (PASTE_BLOCK.has(tag)) s = `\n${s}\n`;
+    return wrapFormats(node, s, ctx);
+  }
+
+  function wrapFormats(node, s, ctx) {
+    const f = formatsOf(node);
+    if (!s.trim()) return s;
+    if (f.code && !ctx.code && !s.includes('`')) return wrapEach(s, '`', '`');
+    if (ctx.code) return s;
+    if (f.strike && !ctx.strike) s = wrapEach(s, '~~', '~~');
+    if (f.underline && !ctx.underline && !f.link) s = wrapEach(s, '__', '__');
+    if (f.italic && !ctx.italic) s = wrapEach(s, '*', '*');
+    if (f.bold && !ctx.bold) s = wrapEach(s, '**', '**');
+    if (f.link && !ctx.link && !/[[\]]/.test(s)) s = `[${oneLine(s)}](${f.link})`;
+    return s;
+  }
+
+  // Block conversion: one editor line per paragraph / list item / table row.
+  function pasteBlocks(parent, lines, ctx) {
+    let buf = '';
+    const flush = () => {
+      buf.split('\n').forEach(l => { if (l.trim()) lines.push(l.trim()); });
+      buf = '';
+    };
+    for (const node of parent.childNodes) {
+      const tag = node.nodeType === Node.ELEMENT_NODE ? node.tagName.toUpperCase() : '';
+      if (!tag || !PASTE_BLOCK.has(tag)) { buf += pasteInline(node, ctx); continue; }
+      flush();
+      const cc = childCtx(node, ctx);
+      if (/^H[1-6]$/.test(tag)) {
+        const text = oneLine(pasteInline(node, { ...ctx, bold: true }));
+        if (text) lines.push(`${'#'.repeat(Math.min(Number(tag[1]), 3))} ${text}`);
+      } else if (tag === 'UL' || tag === 'OL') {
+        pasteList(node, lines, 0, ctx);
+      } else if (tag === 'LI') {
+        lines.push(`- ${oneLine(pasteInline(node, ctx))}`);
+      } else if (tag === 'TABLE') {
+        pasteTable(node, lines, ctx);
+      } else if (tag === 'PRE') {
+        lines.push('```', ...node.textContent.replace(/\r\n/g, '\n').replace(/\n+$/, '').split('\n'), '```');
+      } else if (tag === 'BLOCKQUOTE') {
+        const inner = [];
+        pasteBlocks(node, inner, cc);
+        inner.filter(Boolean).forEach(l => lines.push(`> ${l}`));
+      } else if (tag === 'HR') {
+        lines.push('');
+      } else if ([...node.children].some(c => PASTE_BLOCK.has(c.tagName.toUpperCase()))) {
+        // Layout wrapper (OneNote nests several): recurse, passing down its colors. Bold/italic on a
+        // wrapper itself isn't carried over (wrapping whole lines would break list/table syntax).
+        pasteBlocks(node, lines, { ...ctx, color: cc.color, bg: cc.bg });
+      } else {
+        const text = pasteInline(node, ctx);
+        if (text.trim()) { buf = text; flush(); } else lines.push(''); // empty paragraph = spacer line
+      }
+    }
+    flush();
+  }
+
+  // Lists nest by 2-space indentation. OneNote puts nested <ul>/<ol> directly inside the parent
+  // list (siblings of <li>); browsers/Word put them inside the <li>. Both are handled.
+  function pasteList(list, lines, depth, ctx) {
+    const ordered = list.tagName.toUpperCase() === 'OL';
+    let n = 0;
+    for (const child of list.children) {
+      const tag = child.tagName.toUpperCase();
+      if (tag === 'UL' || tag === 'OL') { pasteList(child, lines, depth + 1, ctx); continue; }
+      if (tag !== 'LI') continue;
+      n++;
+      const nested = [];
+      const cc = childCtx(child, ctx);
+      let text = '';
+      for (const k of child.childNodes) {
+        const kt = k.nodeType === Node.ELEMENT_NODE ? k.tagName.toUpperCase() : '';
+        if (kt === 'UL' || kt === 'OL') nested.push(k);
+        else text += pasteInline(k, cc);
+      }
+      text = wrapFormats(child, oneLine(text), ctx);
+      lines.push(`${'  '.repeat(depth)}${ordered ? `${n}.` : '-'} ${text}`);
+      nested.forEach(k => pasteList(k, lines, depth + 1, ctx));
+    }
+  }
+
+  // Tables become "| a | b |" rows. OneNote sometimes wraps content in a single-cell table; that's
+  // unwrapped instead.
+  function pasteTable(table, lines, ctx) {
+    const rows = [...table.querySelectorAll('tr')].filter(r => r.closest('table') === table);
+    const cellsOf = (r) => [...r.children].filter(c => /^(TD|TH)$/i.test(c.tagName));
+    if (rows.length === 1 && cellsOf(rows[0]).length === 1) {
+      pasteBlocks(cellsOf(rows[0])[0], lines, ctx);
+      return;
+    }
+    rows.forEach((r, i) => {
+      const cells = cellsOf(r).map(c => oneLine(pasteInline(c, ctx)).replace(/\|/g, '\\|'));
+      lines.push(`| ${cells.join(' | ')} |`);
+      if (i === 0 && (cellsOf(r).every(c => c.tagName.toUpperCase() === 'TH') || r.closest('thead'))) {
+        lines.push(`| ${cells.map(() => '---').join(' | ')} |`);
+      }
+    });
+    lines.push('');
+  }
+
+  function htmlToEditorText(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const lines = [];
+    pasteBlocks(doc.body, lines, { bold: false, italic: false, underline: false, strike: false, code: false, link: null, color: null, bg: null });
+    // Collapse runs of blank lines and trim blank edges.
+    return lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
+  }
+
+  // Live preview, rendered with the same converter + sanitizer used for posting and for the log,
+  // so it matches what the comment will look like. On by default; the choice is remembered.
+  let livePreview = true;
+  let previewFrame = 0;
+  chrome.storage.local.get({ commentsLivePreview: true }, (s) => {
+    livePreview = s.commentsLivePreview !== false;
+    applyPreviewVisibility();
+  });
+
+  function applyPreviewVisibility() {
+    const pane = $('[data-role="preview-pane"]');
+    if (!pane) return;
+    pane.hidden = !livePreview;
+    const btn = $('[data-role="preview-btn"]');
+    btn.textContent = livePreview ? 'Hide preview' : 'Show preview';
+    btn.title = livePreview ? 'Hide the live preview' : 'Show a live preview of how the comment will look';
+    btn.setAttribute('aria-pressed', String(livePreview));
+    schedulePreview();
+  }
+
   function togglePreview() {
+    livePreview = !livePreview;
+    chrome.storage.local.set({ commentsLivePreview: livePreview });
+    applyPreviewVisibility();
+    $('textarea')?.focus();
+  }
+
+  function schedulePreview() {
+    if (!livePreview || previewFrame) return;
+    previewFrame = requestAnimationFrame(() => {
+      previewFrame = 0;
+      renderPreview();
+    });
+  }
+
+  function renderPreview() {
     const ta = $('textarea');
     const pv = $('[data-role="preview"]');
-    const showing = !pv.hidden;
-    if (showing) {
-      pv.hidden = true; ta.hidden = false; $('[data-role="preview-btn"]').textContent = 'Preview'; ta.focus();
-    } else {
-      pv.replaceChildren();
-      appendSanitized(pv, toCommentHtml(ta.value));
-      pv.style.height = `${ta.offsetHeight}px`;
-      pv.hidden = false; ta.hidden = true; $('[data-role="preview-btn"]').textContent = 'Edit';
+    if (!ta || !pv || !livePreview) return;
+    pv.replaceChildren();
+    if (!ta.value.trim()) {
+      pv.append(el('span', { class: 'sbc-preview-empty', text: 'Your formatted comment will appear here.' }));
+      return;
     }
+    appendSanitized(pv, toCommentHtml(ta.value));
+    syncPreviewScroll();
+  }
+
+  // Keep the preview roughly aligned with the part of the text being edited.
+  function syncPreviewScroll() {
+    const ta = $('textarea');
+    const pv = $('[data-role="preview"]');
+    if (!ta || !pv || !livePreview) return;
+    const max = ta.scrollHeight - ta.clientHeight;
+    pv.scrollTop = max > 0 ? (ta.scrollTop / max) * (pv.scrollHeight - pv.clientHeight) : 0;
   }
 
   // Drafts survive tab switches and reloads (browser-session storage via the service worker).
@@ -553,8 +853,21 @@
 
   // Markdown-lite → HTML. Everything is HTML-escaped FIRST, so only the tags produced here exist.
   // URLs are deliberately not auto-linked (SOC comments are full of live IOCs).
+  //
+  // Azure renders the stored comment as Markdown (inline HTML allowed), not as plain HTML: a comment
+  // that starts with text gets Markdown applied, so e.g. stray backticks became a code span showing
+  // our raw <br> tags. Like the old SentiBuddy note generator, the output is one block-level HTML
+  // element (<div>…</div>) with no raw newlines, which Markdown passes through untouched. Markdown
+  // punctuation left in text is also entity-encoded in case a renderer looks inside HTML anyway.
+  // That keeps the live preview identical to what Azure shows.
   function escapeHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  const MD_ENTITY = { '*': '&#42;', '_': '&#95;', '`': '&#96;', '~': '&#126;', '[': '&#91;', ']': '&#93;', '\\': '&#92;' };
+  function markdownInert(html) {
+    // Text can't contain "<" (escaped above), so <...> only ever matches tags we generated.
+    const inert = html.replace(/(<[^>]*>)|([*_`~[\]\\])/g, (_m, tag, ch) => tag || MD_ENTITY[ch]);
+    return `<div>${inert}</div>`;
   }
   function inlineMd(s) {
     return s
@@ -575,17 +888,43 @@
     const out = [];
     parts.forEach((part, i) => {
       if (i % 2 === 1) {
-        out.push(`<pre><code>${escapeHtml(part.replace(/^\n|\n$/g, ''))}</code></pre>`);
+        out.push(`<pre><code>${escapeHtml(part.replace(/^\n|\n$/g, '')).replace(/\n/g, '<br>')}</code></pre>`);
         return;
       }
       const lines = escapeHtml(part).split('\n');
-      let list = null;
-      const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+      // Lists nest by indentation (2 spaces per level); each level keeps its <li> open so nested
+      // lists sit inside their parent item.
+      const listStack = [];
+      const closeListsTo = (level) => {
+        while (listStack.length > level) out.push(`</li></${listStack.pop()}>`);
+      };
+      const closeList = () => closeListsTo(0);
+      // Tables: consecutive "| a | b |" lines; a "| --- | --- |" row makes the row above a header.
+      let tableRows = [];
+      const TABLE_SEP = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+      const splitCells = (row) => row.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map(c => c.replace(/\\\|/g, '|').trim());
+      const flushTable = () => {
+        if (!tableRows.length) return;
+        const header = tableRows.length > 1 && TABLE_SEP.test(tableRows[1]);
+        const rows = tableRows.filter(r => !TABLE_SEP.test(r));
+        out.push('<table>');
+        rows.forEach((r, ri) => {
+          const tag = header && ri === 0 ? 'th' : 'td';
+          out.push(`<tr>${splitCells(r).map(c => `<${tag}>${inlineMd(c)}</${tag}>`).join('')}</tr>`);
+        });
+        out.push('</table>');
+        tableRows = [];
+      };
       lines.forEach((line, idx) => {
+        if (/^\s*\|.*\|\s*$/.test(line)) {
+          closeList();
+          tableRows.push(line);
+          return;
+        }
+        flushTable();
         const header = /^(#{1,3})\s+(.*)$/.exec(line);
-        const blockquote = /^>\s+(.*)$/.exec(line);
-        const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
-        const num = /^\s*\d+[.)]\s+(.*)$/.exec(line);
+        const blockquote = /^&gt;\s?(.*)$/.exec(line); // ">" is already escaped here
+        const listItem = /^(\s*)(?:([-*])|\d+[.)])\s+(.*)$/.exec(line);
         const indent = /^(\s+)(.*)$/.exec(line);
         if (header) {
           closeList();
@@ -598,10 +937,16 @@
           out.push(`<blockquote>${inlineMd(blockquote[1])}</blockquote>`);
           return;
         }
-        if (bullet || num) {
-          const kind = bullet ? 'ul' : 'ol';
-          if (list !== kind) { closeList(); out.push(`<${kind}>`); list = kind; }
-          out.push(`<li>${inlineMd((bullet || num)[1])}</li>`);
+        if (listItem) {
+          const kind = listItem[2] ? 'ul' : 'ol';
+          const level = Math.min(Math.floor(listItem[1].length / 2), 6);
+          closeListsTo(level + 1);
+          if (listStack.length === level + 1) {
+            if (listStack[level] === kind) out.push('</li>');
+            else closeListsTo(level);
+          }
+          while (listStack.length < level + 1) { out.push(`<${kind}>`); listStack.push(kind); }
+          out.push(`<li>${inlineMd(listItem[3])}`);
           return;
         }
         closeList();
@@ -609,9 +954,10 @@
         out.push(content);
         if (idx < lines.length - 1) out.push('<br>');
       });
+      flushTable();
       closeList();
     });
-    return out.join('').replace(/^(<br>)+|(<br>)+$/g, '');
+    return markdownInert(out.join('').replace(/^(<br>)+|(<br>)+$/g, ''));
   }
 
   // ---------- Safe HTML rendering for existing comments (people and playbooks write HTML).
@@ -622,8 +968,41 @@
   const DROP = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT', 'IFRAME', 'FRAME', 'OBJECT', 'EMBED', 'SVG', 'MATH',
     'LINK', 'META', 'BASE', 'FORM', 'INPUT', 'BUTTON', 'SELECT', 'TEXTAREA', 'AUDIO', 'VIDEO', 'SOURCE', 'TITLE', 'HEAD']);
   function appendSanitized(target, html) {
-    const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    const doc = new DOMParser().parseFromString(azureInlineMarkdown(html), 'text/html');
     copySafe(doc.body, target, 0);
+  }
+
+  // Azure displays a comment's stored HTML *and* applies inline Markdown to its text, even inside
+  // tags: "<p>**Overview:**</p>" shows bold, `x` shows as code, "\)" shows as ")". Do the same on
+  // the raw HTML string (before entities are decoded) so the log and the preview match Azure.
+  // Comments posted by SentiBuddy entity-encode these characters (markdownInert), so they stay literal
+  // here exactly as they do in Azure. Runs before sanitizing; it only adds allowlisted tags.
+  function azureInlineMarkdown(html) {
+    let skip = 0; // inside <code>/<pre>: no Markdown
+    return String(html || '').split(/(<[^>]*>)/).map(part => {
+      if (part.startsWith('<')) {
+        const m = /^<(\/?)(code|pre)\b/i.exec(part);
+        if (m) skip = Math.max(0, skip + (m[1] ? -1 : 1));
+        return part;
+      }
+      return skip || !part ? part : inlineMarkdownText(part);
+    }).join('');
+  }
+
+  function inlineMarkdownText(s) {
+    const held = [];
+    const hold = (html) => `\u0000${held.push(html) - 1}\u0000`;
+    // `code` spans (matching backtick runs; an unmatched run stays literal), then backslash escapes.
+    s = s.replace(/(^|[^`])(`+)(?!`)([\s\S]*?[^`])\2(?!`)/g,
+      (_m, pre, _ticks, body) => pre + hold(`<code>${body.replace(/^ ([\s\S]*\S[\s\S]*) $/, '$1')}</code>`));
+    s = s.replace(/\\([!-%'-/:;=?@[-`{-~])/g, (_m, c) => hold(`&#${c.charCodeAt(0)};`));
+    s = s
+      .replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|\W)__(?=\S)([\s\S]*?\S)__(?!\w)/g, '$1<strong>$2</strong>')
+      .replace(/(^|[^*\w])\*(?=[^\s*])([^*]*?[^\s*])\*(?![*\w])/g, '$1<em>$2</em>')
+      .replace(/(^|\W)_(?=[^\s_])([^_]*?[^\s_])_(?!\w)/g, '$1<em>$2</em>')
+      .replace(/~~(?=\S)([\s\S]*?\S)~~/g, '<del>$1</del>');
+    return s.replace(/\u0000(\d+)\u0000/g, (_m, i) => held[Number(i)]);
   }
   function copySafe(src, dest, depth) {
     if (depth > 40) return;
@@ -678,10 +1057,13 @@
   }
 
   // ---------- Activity log
+  // Reloads keep showing what's already listed (st.data is only replaced when the new data arrives);
+  // the header's reload icon spins meanwhile.
   async function loadSource(key, opts = {}) {
     if (!incidentArmId) return;
     const def = SOURCES.find(s => s.key === key);
     const st = sources[key];
+    if (st.loading) return;
     const forId = incidentArmId;
     st.fetched = true;
     st.loading = true;
@@ -775,7 +1157,7 @@
     box.replaceChildren(...SOURCES.map(s => {
       const st = sources[s.key];
       const on = enabledSources.has(s.key);
-      const count = st.loading ? '…' : st.note ? '!' : st.data ? String(entriesFor(s.key).length) : '';
+      const count = st.data ? String(entriesFor(s.key).length) : st.loading ? '…' : st.note ? '!' : '';
       return el('button', {
         type: 'button',
         class: `sbc-chip${on ? ' sbc-on' : ''}`,
@@ -816,6 +1198,12 @@
 
   function renderLog(opts = {}) {
     renderChips();
+    const busy = SOURCES.some(s => enabledSources.has(s.key) && sources[s.key].loading);
+    const reload = $('[data-role="reload"]');
+    if (reload) {
+      reload.classList.toggle('sbc-loading', busy);
+      reload.title = busy ? 'Checking for new or edited activity…' : 'Reload activity';
+    }
     const box = $('[data-role="log"]');
     if (!box) return;
     const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;

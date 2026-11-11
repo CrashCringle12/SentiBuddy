@@ -1,4 +1,4 @@
-#sb-esc-dialog {
+#sb-pbd-dialog {
   position: fixed;
   inset: 0;
   z-index: 2147483600;
@@ -9,8 +9,8 @@
   font-size: 13px;
   color: #323130;
 }
-#sb-esc-dialog * { box-sizing: border-box; }
-#sb-esc-dialog .sb-esc-modal {
+#sb-pbd-dialog * { box-sizing: border-box; }
+#sb-pbd-dialog .sb-pbd-modal {
   /* --sb-pb-color / --sb-pb-text are set per playbook button from the master config */
   --sb-pb-color: #605e5c;
   --sb-pb-text: #ffffff;
@@ -20,7 +20,7 @@
   overflow: hidden;
   box-shadow: 0 24px 64px rgba(11, 37, 69, 0.35), 0 2px 8px rgba(11, 37, 69, 0.15);
 }
-#sb-esc-dialog .sb-esc-header {
+#sb-pbd-dialog .sb-pbd-header {
   display: flex; align-items: center; gap: 10px;
   padding: 14px 18px;
   background: var(--sb-pb-color);
@@ -28,17 +28,17 @@
   color: var(--sb-pb-text);
   font-size: 15px; font-weight: 600;
 }
-#sb-esc-dialog .sb-esc-icon {
+#sb-pbd-dialog .sb-pbd-icon {
   width: 26px; height: 26px; border-radius: 6px;
   display: grid; place-items: center;
   background: rgba(255, 255, 255, 0.16);
 }
-#sb-esc-dialog .sb-esc-body { padding: 16px 18px 6px; display: grid; gap: 10px; }
-#sb-esc-dialog .sb-esc-incident { padding: 10px 12px; border-radius: 6px; background: #f5f9fd; border: 1px solid #deecf9; }
-#sb-esc-dialog .sb-esc-inc-title { font-weight: 600; margin-bottom: 2px; word-break: break-word; }
-#sb-esc-dialog .sb-esc-muted { color: #605e5c; font-size: 12px; }
-#sb-esc-dialog .sb-esc-question { font-weight: 600; }
-#sb-esc-dialog .sb-esc-playbook {
+#sb-pbd-dialog .sb-pbd-body { padding: 16px 18px 6px; display: grid; gap: 10px; }
+#sb-pbd-dialog .sb-pbd-incident { padding: 10px 12px; border-radius: 6px; background: #f5f9fd; border: 1px solid #deecf9; }
+#sb-pbd-dialog .sb-pbd-inc-title { font-weight: 600; margin-bottom: 2px; word-break: break-word; }
+#sb-pbd-dialog .sb-pbd-muted { color: #605e5c; font-size: 12px; }
+#sb-pbd-dialog .sb-pbd-question { font-weight: 600; }
+#sb-pbd-dialog .sb-pbd-playbook {
   padding: 10px 12px;
   border: 1px solid var(--sb-pb-color);
   border-left-width: 4px;
@@ -48,24 +48,24 @@
   font-size: 13.5px; font-weight: 600;
   word-break: break-all;
 }
-#sb-esc-dialog .sb-esc-select {
+#sb-pbd-dialog .sb-pbd-select {
   width: 100%; height: 32px; padding: 0 8px;
   border: 1px solid #8a8886; border-radius: 4px;
   font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px;
 }
-#sb-esc-dialog .sb-esc-warn { color: #8a5300; background: #fff4ce; padding: 8px 10px; border-radius: 6px; font-size: 12px; }
-#sb-esc-dialog .sb-esc-error { color: #a4262c; background: #fde7e9; padding: 8px 10px; border-radius: 6px; }
-#sb-esc-dialog .sb-esc-ok { color: #0b6a0b; background: #dff6dd; padding: 8px 10px; border-radius: 6px; }
-#sb-esc-dialog .sb-esc-status:empty { display: none; }
-#sb-esc-dialog .sb-esc-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px 16px; }
-#sb-esc-dialog .sb-esc-btn {
+#sb-pbd-dialog .sb-pbd-warn { color: #8a5300; background: #fff4ce; padding: 8px 10px; border-radius: 6px; font-size: 12px; }
+#sb-pbd-dialog .sb-pbd-error { color: #a4262c; background: #fde7e9; padding: 8px 10px; border-radius: 6px; }
+#sb-pbd-dialog .sb-pbd-ok { color: #0b6a0b; background: #dff6dd; padding: 8px 10px; border-radius: 6px; }
+#sb-pbd-dialog .sb-pbd-status:empty { display: none; }
+#sb-pbd-dialog .sb-pbd-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px 16px; }
+#sb-pbd-dialog .sb-pbd-btn {
   height: 32px; padding: 0 16px;
   border: 1px solid #8a8886; border-radius: 4px;
   background: #fff; color: #323130;
   font: inherit; font-weight: 600;
   cursor: pointer;
 }
-#sb-esc-dialog .sb-esc-btn:hover:not(:disabled) { background: #f3f2f1; }
-#sb-esc-dialog .sb-esc-btn.sb-esc-danger { background: var(--sb-pb-color); border-color: var(--sb-pb-color); color: var(--sb-pb-text); }
-#sb-esc-dialog .sb-esc-btn.sb-esc-danger:hover:not(:disabled) { background: var(--sb-pb-color); filter: brightness(0.88); }
-#sb-esc-dialog .sb-esc-btn:disabled { opacity: 0.55; cursor: default; }
+#sb-pbd-dialog .sb-pbd-btn:hover:not(:disabled) { background: #f3f2f1; }
+#sb-pbd-dialog .sb-pbd-btn.sb-pbd-danger { background: var(--sb-pb-color); border-color: var(--sb-pb-color); color: var(--sb-pb-text); }
+#sb-pbd-dialog .sb-pbd-btn.sb-pbd-danger:hover:not(:disabled) { background: var(--sb-pb-color); filter: brightness(0.88); }
+#sb-pbd-dialog .sb-pbd-btn:disabled { opacity: 0.55; cursor: default; }
